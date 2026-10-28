@@ -121,3 +121,78 @@ export const ELEMENT_PRACTICE = [
     symbol: '黑藍、北方、水景；傳統水行飾品',
   },
 ];
+
+// Practical analogies follow the element's ten-god role relative to the day
+// master; a fixed "wood = study" mapping cannot describe every natal chart.
+export function functionalPractice(a, x) {
+  const relation = (x.element - a.facts.de + 5) % 5;
+  const rows = [
+    {
+      before: '自主與同儕投入缺少分工，或責任集中在少數人身上',
+      action: '列出個人決策權與共同責任，協商誰可替代、何時移交，以及不同投入如何分配',
+      after: '自主與協作較能並存，減少重複投入或競爭同一成果',
+      check: '核對責任移交、重複工作與分配爭議是否改善',
+      excess: '堅持自己處理、擴大同儕競爭，或讓共同支出侵蝕成果',
+    },
+    {
+      before: '能力停留在個人經驗，缺少可交付與可承接的成果',
+      action: '把一項能力整理成作品、流程或服務範圍，先確認誰使用、誰驗收，再安排下一步承接',
+      after: '專業較容易被理解、重複使用並接到實際需求',
+      check: '核對成果採用、返工與後續承接是否改善',
+      excess: '增加產出卻沒有接收者，或過度批判規範而損及協作',
+    },
+    {
+      before: '已有成果或機會，但成本、交換與分配條件尚未形成',
+      action: '核對每項交付的需求、投入、報酬與分配，將尚未確認的機會與已成立承諾分開記錄',
+      after: '較容易辨識哪些成果已有交換條件，哪些仍只是投入',
+      check: '核對實際收付、投入時間與已完成交付是否對得上',
+      excess: '同時接受過多機會，增加投入與維護責任而壓縮餘裕',
+    },
+    {
+      before: '要求與責任缺少標準，或個人與團隊做法難以收斂',
+      action: '為一項任務明訂決策、權責與驗收標準，確認授權後再接受新增要求',
+      after: '較容易把分散投入導向共同目標，並建立可協商的責任界線',
+      check: '核對責任爭議、決策反覆與驗收落差是否減少',
+      excess: '標準與考核過密，或權責不相稱而使壓力超出承接能力',
+    },
+    {
+      before: '缺少可靠方法與支持，或準備過多而難以實際交付',
+      action: '針對一項實際困難找方法或協助，約定應用期限與可交付成果，避免無限延長準備',
+      after: '必要支持較能轉為獨立完成任務的能力',
+      check: '核對是否減少重複查證、增加獨立交付，而非只累積資料',
+      excess: '持續準備而沒有出口，或過度依賴支持並壓縮實際產出',
+    },
+  ];
+  const r = rows[relation];
+  const prohibited = x.roles.includes('主要忌神');
+  const firstAreas = [
+    '自主決策、同儕分工與共同責任',
+    '專業產出、表達與可交付成果',
+    '交易、投入與成果分配',
+    '權責、制度與決策標準',
+    '學習、方法與支持條件',
+  ];
+  const resources = [
+    '共同執行者與可移交責任',
+    '使用者回饋與可重複使用的方法',
+    '需求方、交易條件與可調度資源',
+    '正式授權、驗收與協作規範',
+    '可靠資料、指導與實作支持',
+  ];
+  const cause = x.decisionPath.map((i) => i.reason).join('；') || x.risks.join('；');
+  return {
+    ...r,
+    area: firstAreas[relation],
+    ability: prohibited
+      ? `若繼續增加${x.name}，${cause}；應先限制此方向，不能把其一般能力象義當成建議。`
+      : `${cause}。在條件具備時，較能活化${firstAreas[relation]}相關能力。`,
+    resources: prohibited
+      ? '目前不列為主動觸發資源的方向；先保留能維持主結構的安排。'
+      : `可觀察${resources[relation]}是否出現；須配合${x.conditions.join('；')}。`,
+    after: prohibited
+      ? `依本命結構，增加後可能${x.risks.join('；')}。改善方向是減少加重主病的安排，並非繼續增加。`
+      : `若${x.conditions.join('；')}，${r.after}；未具備時不預期相同改善。`,
+    before: `本命主病為${a.diagnosis.primary.name}。${x.name}對應${['比劫', '食傷', '財星', '官殺', '印星'][relation]}；${r.before}`,
+    symbol: ELEMENT_PRACTICE[x.element].symbol,
+  };
+}

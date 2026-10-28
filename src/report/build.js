@@ -1,5 +1,6 @@
+import { narrativeChapters, CHAPTERS } from './narrative.js';
 import { isBranchInteraction } from '../engine/interactions.js';
-import { GOD_TEMPLATE, ELEMENT_PRACTICE } from './templates.js';
+import { GOD_TEMPLATE, functionalPractice } from './templates.js';
 import { ELEMENTS, STEMS, BRANCHES, STEM_ELEMENT as E, god } from '../data/constants.js';
 import { trace } from '../data/rules.js';
 export const PAGE_NAMES = ['本質', '財運', '緣分', '流年大運', '五行取用喜忌神'];
@@ -199,7 +200,7 @@ export function buildReports(a) {
   ];
   const elements = u.order.map((e) => {
     const x = u.elements[e],
-      practice = ELEMENT_PRACTICE[e],
+      practice = functionalPractice(a, x),
       fav = x.roles.some((r) =>
         ['核心用神', '先決用神', '相神', '輔助喜神', '條件性喜神'].includes(r),
       );
@@ -211,18 +212,22 @@ export function buildReports(a) {
         `五行實用建議是行為類比，不代表能物理增加命盤五行。${x.conditions.join('；')}`,
         [x.trace],
       ),
+      area: practice.area,
+      ability: practice.ability,
+      resources: practice.resources,
       element: e,
       role: x.roles,
       before: practice.before,
       practice: fav
         ? practice.action
         : `先觀察與設界線：${practice.action}；不宜把「補」理解為越多越好。`,
-      after: fav ? practice.after : '先維持平衡，待條件具備再觀察是否有助於主結構',
+      after: practice.after,
       check: practice.check,
       excess: `${practice.excess}；${x.risks.join('；')}`,
       symbol: practice.symbol,
     };
   });
+  const narrative = narrativeChapters(a);
   const pages = [
     essence,
     finance,
@@ -239,12 +244,29 @@ export function buildReports(a) {
     elements,
   ].map((cards, i) => ({
     name: PAGE_NAMES[i],
+    chapter: CHAPTERS[i][0],
+    introduction: CHAPTERS[i][1],
     analysisId: a.id,
     structureId: p.primary.id,
     diseaseId: d.primary.id,
     useSummary: u.summary,
     mainline: a.mainline,
-    cards,
+    cards: [
+      ...narrative[i],
+      ...cards.filter(
+        (c) =>
+          ![
+            '主結構與人生核心主線',
+            '主導傾向與內在矛盾',
+            '職能、權責與工作條件',
+            '收入通道',
+            '用錢模式',
+            '合作分配',
+            '伴侶：吸引與接近',
+            '伴侶：相處與承諾',
+          ].includes(c.title),
+      ),
+    ],
   }));
   const checks = checkReports(a, pages);
   return {
@@ -260,6 +282,15 @@ export function buildReports(a) {
 }
 export function checkReports(a, pages) {
   return [
+    {
+      name: '結構否決未被改列喜神',
+      pass: (a.use.veto || []).every(
+        (e) =>
+          !a.use.elements[e].roles.some((r) =>
+            ['核心用神', '先決用神', '輔助喜神', '條件性喜神'].includes(r),
+          ),
+      ),
+    },
     { name: '五頁齊備', pass: pages.length === 5 },
     {
       name: '同一本命母分析',

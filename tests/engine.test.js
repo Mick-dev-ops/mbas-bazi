@@ -226,9 +226,8 @@ describe('承格、病藥、源流與喜忌', () => {
     const f = fakeFacts({ 偏印: 3, 食神: 1, 比肩: 4, 正財: 1, 傷官: 2, 正官: 2 }),
       d = diagnose(f, { state: '承格不足', ratio: 0.3 }, { candidates: [] }, flowAnalysis(f));
     expect(d.primary.id).toBe('capacity');
-    expect(d.diseases.map((x) => x.id)).toEqual(
-      expect.arrayContaining(['owl', 'wealth', 'officer']),
-    );
+    expect(d.diseases.some((x) => x.id === 'wealth')).toBe(false); // no structural damage evidence: quantities alone do not establish wealth loss
+    expect(d.diseases.map((x) => x.id)).toEqual(expect.arrayContaining(['owl', 'officer']));
     expect(
       d.rescues.every(
         (r) => d.diseases.some((d) => d.id === r.disease) && r.sideEffect && r.condition,

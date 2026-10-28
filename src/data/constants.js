@@ -58,8 +58,8 @@ export function god(day, stem) {
 }
 export const VERSION = {
   calendar: 'ziping-solar-1.0.0',
-  rules: 'mbas-1.0.0',
-  templates: 'zh-TW-1.0.0',
+  rules: 'mbas-1.1.0',
+  templates: 'zh-TW-1.1.0',
   timezone: 'moment-timezone-0.6.0',
   astronomy: 'astronomy-engine-2.1.19',
 };

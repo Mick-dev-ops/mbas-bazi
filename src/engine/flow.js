@@ -1,9 +1,18 @@
 import { ELEMENTS, mod } from '../data/constants.js';
 import { trace } from '../data/rules.js';
-export function flowAnalysis(f) {
-  const values = f.elements,
-    source = values.indexOf(Math.max(...values)),
-    path = [source];
+export function flowAnalysis(f, patterns = null) {
+  const values = f.elements;
+  const sourceGod =
+    { 'PAT-02': '食神', 'PAT-03': '食神', 'PAT-04': '七殺', 'PAT-05': '偏財', 'PAT-06': '傷官' }[
+      patterns?.primary.id
+    ] || patterns?.monthJudgment?.name;
+  const carrier = sourceGod
+    ? f.items
+        .filter((x) => x.god === sourceGod && x.force >= 0.2)
+        .sort((a, b) => b.force - a.force)[0]
+    : null;
+  const source = carrier?.element ?? values.indexOf(Math.max(...values));
+  const path = [source];
   for (let n = 1; n < 5; n++) {
     const e = mod(source + n, 5);
     if (values[e] < 0.8) break;

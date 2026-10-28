@@ -45,6 +45,33 @@ export function diagnose(f, c, p, flow) {
       side,
       trace: trace('DIS-01', true, evidence, name),
     });
+  const wealthStructure =
+    ['PAT-02', 'PAT-05'].includes(p.primary?.id) ||
+    ['正財', '偏財'].includes(p.monthJudgment?.name);
+  const wealthDamage = (f.interactions || []).filter(
+    (x) =>
+      x.type === '天干剋' &&
+      x.affectedPositions?.some((pos) =>
+        f.items.some((i) => i.position === pos && i.exposed && ['正財', '偏財'].includes(i.god)),
+      ),
+  );
+  const financialObstruction = c.concentrated && wealthStructure && wealthDamage.length > 0;
+  if (financialObstruction) {
+    add(
+      'wealth-channel',
+      '比劫制財妨礙食傷生財與財官承接',
+      5,
+      [
+        p.primary.name,
+        ...wealthDamage.map((x) => x.detail),
+        ...c.for,
+        `負荷比 ${c.ratio.toFixed(3)}不單獨定旺衰；${c.body}`,
+      ],
+      mod(de + 2, 5),
+      '財須有根、食傷可承接，並保留官殺疏制比劫的作用',
+      '財不能無限增加；官殺過量仍會攻身，食傷過量可能制官',
+    );
+  }
   if (c.state === '承格不足')
     add(
       'capacity',
@@ -111,7 +138,7 @@ export function diagnose(f, c, p, flow) {
       '相神增加亦會改變承格負荷，須重新檢查主結構',
     );
   }
-  if (g.比肩 + g.劫財 > g.正財 + g.偏財 && g.正財 + g.偏財 >= 0.8)
+  if (wealthStructure && wealthDamage.length > 0 && g.正財 + g.偏財 >= 0.8)
     add(
       'wealth',
       '財受比劫競奪',
@@ -177,32 +204,63 @@ export function diagnose(f, c, p, flow) {
   };
 }
 export function adjudicate(f, c, p, flow, climate, diagnosis) {
-  const scores = ELEMENTS.map(() => 0),
-    reasons = ELEMENTS.map(() => []),
-    risks = ELEMENTS.map(() => []),
-    de = f.de;
-  const add = (e, n, s) => {
-    scores[e] += n;
-    reasons[e].push(s);
+  const de = f.de;
+  const candidates = ELEMENTS.map((name, element) => ({
+    element,
+    name,
+    intents: [],
+    risks: [],
+    veto: [],
+    conditions: [],
+  }));
+  const nominate = (e, stage, role, reason, condition, source) => {
+    if (e === null || e === undefined) return;
+    const x = candidates[e];
+    x.intents.push({ stage, role, reason, source });
+    if (condition) x.conditions.push(condition);
   };
-  diagnosis.rescues.forEach((r, i) =>
-    add(
-      r.element,
-      i === 0 ? 5 : 1.2,
-      `救應順位${i + 1}：${diagnosis.diseases.find((d) => d.id === r.disease).name}`,
-    ),
-  );
-  if (c.state === '承格不足') {
-    add(mod(de + 4, 5), 2, '印生身以承格');
-    add(de, 1.5, '比劫分擔負荷');
-  } else if (c.state === '可承') {
-    add(mod(de + 1, 5), 1.5, '食傷洩秀');
-    add(mod(de + 2, 5), 1, '財承接產出');
+  // Ordinal decision stages, never sum elemental quantities or weighted votes.
+  // A candidate must name a structural problem/rescue before being selected.
+  for (const [i, r] of diagnosis.rescues.entries()) {
+    const disease = diagnosis.diseases.find((x) => x.id === r.disease);
+    nominate(r.element, i === 0 ? 0 : 4, '救應候選', `處理${disease.name}`, r.condition, r.disease);
+    candidates[r.element].risks.push(r.sideEffect);
   }
-  for (const b of flow.barriers) if (!b.available) add(b.bridge, 1.5, '接通相剋兩端');
-  if (climate.impeded && climate.target !== null)
-    add(climate.target, climate.priority, '調候參與救應');
-  // 將已成立格局所需相神的五行納入，並保留作為獨立角色。
+  const financial = diagnosis.primary.id === 'wealth-channel';
+  if (financial) {
+    nominate(
+      mod(de + 3, 5),
+      1,
+      '輔助喜神',
+      '官殺疏制妨礙財路的比劫，協助財官承接',
+      '財能生官，官殺須有根；不得被食傷制盡，也不可攻身過重',
+      'wealth-channel',
+    );
+    nominate(
+      mod(de + 1, 5),
+      2,
+      '相神',
+      '食傷承接身氣並生財，維持主結構',
+      '須接到財，不可只增加食傷而壓制必要官星',
+      'wealth-channel',
+    );
+    candidates[de].veto.push('加重比劫制財，使主要結構的交易與分配通道受損');
+    const 印 = mod(de + 4, 5);
+    if (!(climate.impeded && climate.target === 印))
+      candidates[印].veto.push('印生比劫並制食傷，加重主病且損食傷生財相神');
+    else candidates[印].risks.push('調候可用但會生比劫制食傷，只能在保留財與食傷通道時有限使用');
+  }
+  if (c.state === '承格不足') {
+    nominate(
+      mod(de + 4, 5),
+      1,
+      '先決用神',
+      '先建立承格所需的印星轉接',
+      '印有根且不被財破；不得壓制本命必要食傷',
+      'capacity',
+    );
+    nominate(de, 5, '條件性喜神', '比劫可分擔負荷', '僅在印不能充分承接且不競財時使用', 'capacity');
+  }
   const assistElements = [
     ...new Set(
       f.items
@@ -210,89 +268,123 @@ export function adjudicate(f, c, p, flow, climate, diagnosis) {
         .map((x) => x.element),
     ),
   ];
-  assistElements.forEach((e) => add(e, 2, `維持${p.primary.name}所需相神`));
-  for (let e = 0; e < 5; e++) {
-    if (c.state === '承格不足' && [mod(de + 1, 5), mod(de + 2, 5), mod(de + 3, 5)].includes(e)) {
-      scores[e] -= 2.5;
-      risks[e].push('增加洩、耗或剋，先補承格條件');
-    }
-    if (f.gods.食神 >= 0.8 && e === mod(de + 4, 5)) {
-      scores[e] -= 1.2;
-      risks[e].push('印過量可能壓制食神產出');
-    }
-    if (f.gods.正印 >= 0.8 && e === mod(de + 2, 5)) {
-      scores[e] -= 1.2;
-      risks[e].push('財過量可能破壞印星承接');
-    }
-    if (f.elements[e] > Math.max(...f.elements) * 0.85) {
-      scores[e] -= 1;
-      risks[e].push('已屬較強力量，增加前先查是否過量');
-    }
+  for (const e of assistElements)
+    nominate(
+      e,
+      2,
+      '相神',
+      `維持${p.primary.name}所需承接`,
+      '具位置承接且不被剋制，不損主結構',
+      p.primary.id,
+    );
+  for (const b of flow.barriers.filter((x) => !x.available))
+    nominate(
+      b.bridge,
+      3,
+      '輔助喜神',
+      `接通${ELEMENTS[b.from]}與${ELEMENTS[b.to]}之間的阻隔`,
+      b.condition,
+      'FLOW-02',
+    );
+  if (climate.impeded && climate.target !== null)
+    nominate(
+      climate.target,
+      4,
+      '條件性喜神',
+      '解除妨礙發用的寒暖燥濕',
+      '調候力量有根、可承接且不破格傷用',
+      'CLIM-01',
+    );
+  for (const x of candidates) {
+    const e = x.element;
+    if (c.state === '承格不足' && [mod(de + 1, 5), mod(de + 2, 5), mod(de + 3, 5)].includes(e))
+      x.risks.push('需先滿足承格條件；未具備時增加洩耗剋會加重主病');
+    if (f.gods.食神 >= 0.8 && e === mod(de + 4, 5))
+      x.risks.push('印制食傷：須核對是否損及必要產出');
+    if (f.gods.正印 >= 0.8 && e === mod(de + 2, 5)) x.risks.push('財破印：須核對是否損及必要承接');
+    x.intents.sort((a, b) => a.stage - b.stage);
   }
-  const order = ELEMENTS.map((_, e) => e).sort((a, b) => scores[b] - scores[a] || a - b),
-    core = scores[order[0]] > 0 ? order[0] : null;
-  const prerequisite = c.state === '承格不足' ? mod(de + 4, 5) : null;
-  const elements = ELEMENTS.map((name, e) => {
-    const roles = [];
-    if (e === core) roles.push('核心用神');
-    if (e === prerequisite) roles.push('先決用神');
-    if (assistElements.includes(e)) roles.push('相神');
-    const category =
-      scores[e] >= 2
-        ? '輔助喜神'
-        : scores[e] > 0
-          ? '條件性喜神'
-          : scores[e] <= -2
-            ? '主要忌神'
-            : '條件性忌神';
-    if (!roles.length || !['輔助喜神', '條件性喜神'].includes(category)) roles.push(category);
-    const conditions = diagnosis.rescues.filter((r) => r.element === e).map((r) => r.condition);
-    const role = [
-      '比劫：自主行動、同儕分擔與競爭',
-      '食傷：技術表達、交付與產出',
-      '財星：交易、成本與可管理的收入',
-      '官殺：外部要求、授權與責任',
-      '印星：知識、方法與支持',
-    ][mod(e - de, 5)];
-    const first = [
-      '承接與分擔壓力，但須先談分配',
-      '把能力轉成可驗收成果，須有後續承接',
-      '把成果接到交易與收款，須有承財空間',
-      '把要求轉成權責與驗收，須有承格或印星轉接',
-      '先建立可依循的方法與支持，再擴大責任',
-    ][mod(e - de, 5)];
-    const natalFacts = f.items.filter((x) => x.element === e).map(f.factText);
+  const veto = candidates.filter((x) => x.veto.length).map((x) => x.element);
+  const coreCandidate = candidates
+    .filter((x) => !x.veto.length && x.intents.some((i) => i.stage === 0))
+    .sort((a, b) => a.element - b.element)[0];
+  const core = coreCandidate?.element ?? null;
+  const prerequisite =
+    c.state === '承格不足' && !veto.includes(mod(de + 4, 5)) ? mod(de + 4, 5) : null;
+  const rolesByRelation = ['比劫', '食傷', '財星', '官殺', '印星'];
+  const elements = candidates.map((x) => {
+    const e = x.element,
+      roles = [];
+    if (x.veto.length) roles.push('主要忌神');
+    else {
+      if (e === core) roles.push('核心用神');
+      if (e === prerequisite) roles.push('先決用神');
+      if (x.intents.some((i) => i.role === '相神')) roles.push('相神');
+      if (!roles.length)
+        roles.push(
+          x.intents.length
+            ? x.intents.some((i) => i.role === '輔助喜神')
+              ? '輔助喜神'
+              : '條件性喜神'
+            : '條件性忌神',
+        );
+    }
+    const reasons = x.intents.map((i) => i.reason);
+    const conditions = [...new Set(x.conditions)];
+    if (!conditions.length)
+      conditions.push('目前沒有直接救應依據，不主動增加；只有不傷主結構時才有限使用');
+    const risks = [...new Set([...x.veto, ...x.risks])];
+    if (!risks.length) risks.push('過量可能改變生剋方向，需重新核對相神與承格');
+    const decisionPath = x.intents.map((i) => ({
+      stage: i.stage,
+      source: i.source,
+      reason: i.reason,
+    }));
     return {
       element: e,
-      name,
-      score: Number(scores[e].toFixed(3)),
+      name: x.name,
       roles,
-      function: `${name}對應${role}，現有作用力 ${f.elements[e].toFixed(2)}；先作用於${first}。${reasons[e].join('；') || '目前不屬優先救應，先維持現有結構'}`,
-      conditions: conditions.length
-        ? conditions
-        : ['須能透出、通根或經由有力位置承接，且不損主結構'],
-      risks: risks[e].length ? risks[e] : ['過量會打破原有承接比例，須重新檢查主病與相神'],
+      // Compatibility field: ordinal diagnostic rank, not a vote or strength.
+      score: x.veto.length
+        ? -3
+        : x.intents.length
+          ? 6 - Math.min(...x.intents.map((i) => i.stage))
+          : 0,
+      decisionPath,
+      conditions,
+      risks,
+      function: `${x.name}在本命對應${rolesByRelation[mod(e - de, 5)]}，先作用於${diagnosis.primary.name}涉及的結構環節。${x.veto.length ? x.veto.join('；') : reasons.join('；') || '無直接救應依據，不因缺少或數量低而取用'}。`,
       trace: trace(
         'USE-01',
         true,
         [
-          ...natalFacts,
-          `${name}總作用力 ${f.elements[e].toFixed(2)}；承格比 ${c.ratio.toFixed(2)}`,
-          ...diagnosis.primary.evidence,
-          ...reasons[e],
-          ...risks[e],
-          `功能分 ${scores[e].toFixed(3)}`,
+          `主結構 ${p.primary.name}`,
+          `${x.name}總作用力 ${f.elements[e].toFixed(3)}（僅盤面資料，不參與喜忌排序）`,
+          `主病 ${diagnosis.primary.name}`,
+          ...f.items.filter((i) => i.element === e).map(f.factText),
+          ...decisionPath.map((i) => `階段 ${i.stage}／${i.source}：${i.reason}`),
+          ...conditions,
+          ...risks,
         ],
-        `${name}：${roles.join('、')}`,
+        `${x.name}：${roles.join('、')}`,
       ),
     };
   });
+  const priority = (e) =>
+    e === core
+      ? -1
+      : candidates[e].veto.length
+        ? 100
+        : Math.min(99, ...candidates[e].intents.map((i) => i.stage));
+  const order = elements.map((x) => x.element).sort((a, b) => priority(a) - priority(b) || a - b);
   return {
     core,
     prerequisite,
     assistElements,
     elements,
     order,
+    veto,
+    method: 'structure-rescue-ordinal-v1',
     summary: elements.map((x) => `${x.name}:${x.roles.join('/')}`).join('；'),
   };
 }

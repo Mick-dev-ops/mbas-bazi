@@ -67,7 +67,7 @@ const annual = annualReport(mother, 2026);
 | `flow`      | 主源、相生路徑、相剋阻隔、中介通關、清濁、真假         |
 | `climate`   | 日干×月支索引、寒暖燥濕、全局火水與候選承接            |
 | `diagnosis` | 觸發的病、嚴重度、主病、逐病救應及副作用               |
-| `use`       | 五行功能、分數、先決條件、角色、風險及順位             |
+| `use`       | 五行功能、候選來源序位、排除、先決條件、角色及順位     |
 | `mainline`  | 由母分析統一生成的人生核心主線                         |
 | `id`        | 出生欄位與完整版本組合的穩定 FNV-1a 識別碼，非安全憑證 |
 
@@ -78,7 +78,7 @@ const annual = annualReport(mother, 2026);
 ```js
 {
   rule: 'PAT-02',
-  version: 'mbas-1.0.0',
+  version: 'mbas-1.1.0',
   passed: false,
   condition: '版本化成立條件',
   exclusion: '版本化排除條件',
@@ -111,3 +111,7 @@ const annual = annualReport(mother, 2026);
 6. `npm run check` 通過後交付或推送部署。
 
 時區更新須由鎖定版本的依賴擷取，保留完整歷史；不可改用僅含前後數年的時區 bundle。日干、干支、地點、規則 ID 等排序以固定陣列／數值決定，不以使用者語系的排序作裁決依據。
+
+## 1.1.0 結構覆核
+
+先定位格局並建立損傷假說，再以承格、流通與調候覆核，形成唯一母分析。`pipeline` 保存九個階段；`use.decisionPath` 保存候選來源；`use.veto` 保存結構否決。`score` 僅保留舊欄位相容，不參與喜忌排序。詳見 AUDIT_1.1.0.md。

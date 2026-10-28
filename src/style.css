@@ -722,3 +722,14 @@ th {
     margin: 15mm;
   }
 }
+
+.chapter-intro {
+  max-width: 52rem;
+  line-height: 1.9;
+  color: #52616b;
+  margin-bottom: 1.8rem;
+}
+.narrative-paragraph {
+  line-height: 1.95;
+  margin: 1em 0;
+}

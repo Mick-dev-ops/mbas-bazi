@@ -96,7 +96,7 @@ function periodHtml() {
 }
 function renderReport(index) {
   const p = reports.pages[index];
-  return `<section id="page-${tabs[index]}" class="report-page" role="tabpanel" aria-labelledby="tab-${tabs[index]}"><div class="section-label">${String(index + 1).padStart(2, '0')} / MBAS REPORT</div><h2>${p.name}</h2>${p.cards.map(renderCard).join('')}${index === 0 ? patternAudit(analysis) : index === 3 ? periodHtml() : ''}${index === 4 ? `<article class="report-card"><h3>五行使用順序與副作用</h3><p>${analysis.use.order.map((e) => analysis.use.elements[e].name).join(' → ')}。順序為本版規則的功能優先級，並非建議把所有五行逐項增加。</p>${evidence(analysis.use.elements.map((x) => x.trace))}</article>` : ''}</section>`;
+  return `<section id="page-${tabs[index]}" class="report-page" role="tabpanel" aria-labelledby="tab-${tabs[index]}"><div class="section-label">${String(index + 1).padStart(2, '0')} / MBAS REPORT · ${esc(p.name)}</div><h2>${esc(p.chapter || p.name)}</h2><p class="chapter-intro">${esc(p.introduction || '')}</p>${p.cards.map(renderCard).join('')}${index === 0 ? patternAudit(analysis) : index === 3 ? periodHtml() : ''}${index === 4 ? `<article class="report-card"><h3>五行使用順序與副作用</h3><p>${analysis.use.order.map((e) => analysis.use.elements[e].name).join(' > ')}。順序為結構與救應的功能優先級，並非建議把所有五行逐項增加。</p>${evidence(analysis.use.elements.map((x) => x.trace))}</article>` : ''}</section>`;
 }
 function wirePeriods() {
   document.querySelectorAll('[data-luck]').forEach((b) =>
