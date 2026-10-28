@@ -115,3 +115,7 @@ const annual = annualReport(mother, 2026);
 ## 1.1.0 結構覆核
 
 先定位格局並建立損傷假說，再以承格、流通與調候覆核，形成唯一母分析。`pipeline` 保存九個階段；`use.decisionPath` 保存候選來源；`use.veto` 保存結構否決。`score` 僅保留舊欄位相容，不參與喜忌排序。詳見 AUDIT_1.1.0.md。
+
+## 1.2.0 命主與內部資料分離
+
+`main.js` 先執行內部母分析與一致性檢查，再使用 `buildClientReports`。呈現與下載僅使用 client 報告資料，原局用神不在呈現層重判。`clientLuck` 與 `clientAnnual` 將原有運年結果轉為生活階段情境，跨生日分界拆段。正式網頁不呼叫 patternAudit、impactView、evidence 等維護用輸出。

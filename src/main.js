@@ -1,20 +1,10 @@
+import { buildClientReports, clientAnnual, clientLuck } from './report/client.js';
 import './style.css';
 import { LOCATIONS, RANGE } from './data/locations.js';
-import { VERSION } from './data/constants.js';
 import { calculate } from './calendar/chart.js';
 import { analyze } from './engine/analyze.js';
-import { annualReport, periodImpact } from './engine/periods.js';
 import { buildReports } from './report/build.js';
-import {
-  esc,
-  chartOverview,
-  renderCard,
-  patternAudit,
-  luckTimeline,
-  impactView,
-  methodView,
-  evidence,
-} from './ui/render.js';
+import { esc, chartOverview, renderCard, luckTimeline, methodView } from './ui/render.js';
 const app = document.querySelector('#app');
 const tabs = ['essence', 'finance', 'relations', 'periods', 'elements'];
 let analysis = null,
@@ -29,7 +19,7 @@ const opts = (values, chosen) =>
     )
     .join('');
 const numbers = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
-app.innerHTML = `<header><a class="brand" href="#home"><span class="seal">命</span><span>MBAS<small>八字命盤解讀專家系統</small></span></a><a class="method-link" href="#method">方法與規則 ↗</a></header><main><section id="birth-section" class="intro"><div class="intro-copy"><div class="section-label">THE STRUCTURE BEHIND YOUR STORY</div><h1>讀懂命局結構，<br>看見選擇的條件。</h1><p>從四柱出發，逐步檢查格局、承格與喜忌。<br>每個重要判斷，都有可以展開的依據。</p><div class="intro-foot"><span>子平節令排盤</span><span>MBAS 規則裁決</span><span>瀏覽器端完成</span></div></div><form id="birth-form"><div class="form-title"><h2>建立你的命盤</h2><span>01 / 出生資料</span></div><div class="fields"><label>性別<select name="sex">${opts(['男', '女'], '男')}</select></label><label>西元出生年<select name="year">${opts(numbers(RANGE.min, RANGE.max).reverse(), 1990)}</select></label><label>月<select name="month">${opts(numbers(1, 12), 6)}</select></label><label>日<select name="day"></select></label><label>出生小時<select name="hour">${opts(numbers(0, 23), 12)}</select></label><label>分鐘<select name="minute">${opts(numbers(0, 59), 0)}</select></label></div><div class="fields places"><label>國家／地區<select name="country"></select></label><label>行政區<select name="region"></select></label><input type="hidden" name="location"></div><p class="form-note">支援 ${RANGE.min}–${RANGE.max} 年・${LOCATIONS.length} 個支援行政區。採所選行政區當時法定時間，00:00 換日。<a href="#method">查看清單與慣例</a></p><button class="primary" type="submit">排盤並產生完整解讀 <span>→</span></button><p id="error" role="alert"></p></form></section><section id="result" hidden><div id="chart"></div><div class="report-tools"><span id="audit-status"></span><div><button id="print">列印完整報告 / PDF</button><button id="export">匯出 JSON</button><a href="#home">修改出生資料</a></div></div><nav class="tabs" aria-label="命盤報告頁籤" role="tablist">${['本質', '財運', '緣分', '流年大運', '五行取用喜忌神'].map((n, i) => `<a role="tab" id="tab-${tabs[i]}" aria-controls="page-${tabs[i]}" href="#${tabs[i]}">${n}</a>`).join('')}</nav><div id="report-content"></div></section><div id="methods" hidden></div></main><footer><b>MBAS</b> · 規則可檢查，判斷有條件。<span>${VERSION.calendar} / ${VERSION.rules}</span></footer>`;
+app.innerHTML = `<header><a class="brand" href="#home"><span class="seal">命</span><span>MBAS<small>八字命盤解讀專家系統</small></span></a><a class="method-link" href="#method">閱讀說明 ↗</a></header><main><section id="birth-section" class="intro"><div class="intro-copy"><div class="section-label">THE STRUCTURE BEHIND YOUR STORY</div><h1>了解自己，<br>看見人生的方向。</h1><p>從出生資料出發，了解自己的傾向與人生節奏。<br>從性格、財運到關係，整理適合你的發展方向。</p><div class="intro-foot"><span>子平節令排盤</span><span>完整人生解讀</span><span>瀏覽器端完成</span></div></div><form id="birth-form"><div class="form-title"><h2>建立你的命盤</h2><span>01 / 出生資料</span></div><div class="fields"><label>性別<select name="sex">${opts(['男', '女'], '男')}</select></label><label>西元出生年<select name="year">${opts(numbers(RANGE.min, RANGE.max).reverse(), 1990)}</select></label><label>月<select name="month">${opts(numbers(1, 12), 6)}</select></label><label>日<select name="day"></select></label><label>出生小時<select name="hour">${opts(numbers(0, 23), 12)}</select></label><label>分鐘<select name="minute">${opts(numbers(0, 59), 0)}</select></label></div><div class="fields places"><label>國家／地區<select name="country"></select></label><label>行政區<select name="region"></select></label><input type="hidden" name="location"></div><p class="form-note">支援 ${RANGE.min}–${RANGE.max} 年・${LOCATIONS.length} 個支援行政區。採所選行政區當時法定時間，00:00 換日。<a href="#method">查看支援清單</a></p><button class="primary" type="submit">排盤並產生完整解讀 <span>→</span></button><p id="error" role="alert"></p></form></section><section id="result" hidden><div id="chart"></div><div class="report-tools"><span id="audit-status"></span><div><button id="print">列印完整報告 / PDF</button><button id="export">下載報告</button><a href="#home">修改出生資料</a></div></div><nav class="tabs" aria-label="命盤報告頁籤" role="tablist">${['本質', '財運', '緣分', '流年大運', '五行取用喜忌神'].map((n, i) => `<a role="tab" id="tab-${tabs[i]}" aria-controls="page-${tabs[i]}" href="#${tabs[i]}">${n}</a>`).join('')}</nav><div id="report-content"></div></section><div id="methods" hidden></div></main><footer><b>MBAS</b> · 認識自己的傾向，安排適合的生活節奏。<span>v1.2.0</span></footer>`;
 const form = document.querySelector('#birth-form'),
   field = (n) => form.elements.namedItem(n);
 function days() {
@@ -67,11 +57,11 @@ function generate(input) {
     nextReports = buildReports(next);
   if (!nextReports.checks.every((c) => c.pass)) throw Error('報告未通過一致性校驗。');
   analysis = next;
-  reports = nextReports;
+  reports = buildClientReports(next);
   selectedLuck = 0;
   selectedYear = Math.max(analysis.chart.birth.year, 2026);
   document.querySelector('#chart').innerHTML = chartOverview(analysis);
-  document.querySelector('#audit-status').textContent = `一致性校驗通過 · 分析 ${analysis.id}`;
+  document.querySelector('#audit-status').textContent = '報告已完成';
 }
 form.addEventListener('submit', (event) => {
   event.preventDefault();
@@ -92,29 +82,45 @@ form.addEventListener('submit', (event) => {
     error.textContent = e.message;
   }
 });
+function yearPicker() {
+  const annual = clientAnnual(analysis, selectedYear);
+  return `<article class="report-card year-picker"><label for="annual-year">選擇流年</label><select id="annual-year">${opts(numbers(analysis.chart.solarYear, analysis.chart.birth.year + 110), selectedYear)}</select><p>${selectedYear} 年 ${annual.pillar}</p></article>`;
+}
+function annualHtml(financeOnly = false) {
+  const r = clientAnnual(analysis, selectedYear);
+  return r.segments
+    .map((s) =>
+      renderCard({
+        title: `${selectedYear} 年・${s.ageLabel}・${s.theme}`,
+        conclusion: financeOnly ? s.money : s.summary,
+        paragraphs: [s.dateLabel, ...(financeOnly ? [] : [s.money, s.relation])],
+      }),
+    )
+    .join('');
+}
 function periodHtml() {
-  const annual = annualReport(analysis, selectedYear);
-  return `${luckTimeline(analysis, selectedLuck)}${impactView(periodImpact(analysis, analysis.chart.luck[selectedLuck]), analysis, '所選大運：十年期間主題')}<article class="report-card year-picker"><label for="annual-year">選擇流年（立春起算）</label><select id="annual-year">${opts(numbers(analysis.chart.solarYear, analysis.chart.birth.year + 110), selectedYear)}</select><p>${selectedYear} 年 ${annual.pillar.text}；交運點分段如下。</p></article>${annual.segments.map((s, i) => impactView(s, analysis, `流年分析${annual.segments.length > 1 ? '・第 ' + (i + 1) + ' 段' : ''}`)).join('')}`;
+  const selected = clientLuck(analysis, analysis.chart.luck[selectedLuck]);
+  return `${luckTimeline(analysis, selectedLuck)}${selected.map((s) => renderCard({ title: `${s.luck}大運・${s.ageLabel}・${s.stage}`, conclusion: s.summary, paragraphs: [s.dateLabel, `生活重點：${s.domains.join('、')}`, s.money, s.relation] })).join('')}${yearPicker()}${annualHtml()}`;
 }
 function renderReport(index) {
   const p = reports.pages[index];
-  return `<section id="page-${tabs[index]}" class="report-page" role="tabpanel" aria-labelledby="tab-${tabs[index]}"><div class="section-label">${String(index + 1).padStart(2, '0')} / MBAS REPORT · ${esc(p.name)}</div><h2>${esc(p.chapter || p.name)}</h2><p class="chapter-intro">${esc(p.introduction || '')}</p>${p.cards.map(renderCard).join('')}${index === 0 ? patternAudit(analysis) : index === 3 ? periodHtml() : ''}${index === 4 ? `<article class="report-card"><h3>五行使用順序與副作用</h3><p>${analysis.use.order.map((e) => analysis.use.elements[e].name).join(' > ')}。順序為結構與救應的功能優先級，並非建議把所有五行逐項增加。</p>${evidence(analysis.use.elements.map((x) => x.trace))}</article>` : ''}</section>`;
+  return `<section id="page-${tabs[index]}" class="report-page" role="tabpanel" aria-labelledby="tab-${tabs[index]}"><div class="section-label">${esc(p.name)}</div><h2>${esc(p.chapter)}</h2>${p.cards.map(renderCard).join('')}${index === 3 ? periodHtml() : index === 1 ? yearPicker() + annualHtml(true) : ''}</section>`;
 }
-function wirePeriods() {
+function wirePeriods(index) {
   document.querySelectorAll('[data-luck]').forEach((b) =>
     b.addEventListener('click', () => {
       selectedLuck = Number(b.dataset.luck);
-      renderContent(3);
+      renderContent(index);
     }),
   );
   document.querySelector('#annual-year')?.addEventListener('change', (e) => {
     selectedYear = Number(e.target.value);
-    renderContent(3);
+    renderContent(index);
   });
 }
 function renderContent(index) {
   document.querySelector('#report-content').innerHTML = renderReport(index);
-  wirePeriods();
+  wirePeriods(index);
 }
 function route() {
   const key = location.hash.slice(1) || 'home',
@@ -148,24 +154,13 @@ document.querySelector('.tabs').addEventListener('keydown', (e) => {
 document.querySelector('#export').addEventListener('click', () => {
   if (!analysis) return;
   const blob = new Blob(
-    [
-      JSON.stringify(
-        {
-          schema: 'mbas-report-1.0.0',
-          analysis,
-          reports,
-          annual: annualReport(analysis, selectedYear),
-        },
-        null,
-        2,
-      ),
-    ],
+    [JSON.stringify({ report: reports, year: clientAnnual(analysis, selectedYear) }, null, 2)],
     { type: 'application/json' },
   );
   const url = URL.createObjectURL(blob),
     link = document.createElement('a');
   link.href = url;
-  link.download = `MBAS-${analysis.id}.json`;
+  link.download = 'MBAS-report.json';
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
@@ -173,7 +168,7 @@ document.querySelector('#print').addEventListener('click', () => {
   if (!analysis) return;
   const root = document.createElement('div');
   root.id = 'print-report';
-  root.innerHTML = `<h1>MBAS 八字命盤完整報告</h1>${chartOverview(analysis)}${reports.pages.map((_, i) => renderReport(i)).join('')}<p>版本 ${esc(JSON.stringify(analysis.chart.versions))} · 分析 ${analysis.id}</p>${evidence([reports.trace])}`;
+  root.innerHTML = `<h1>MBAS 八字命盤完整報告</h1>${chartOverview(analysis)}${reports.pages.map((_, i) => renderReport(i)).join('')}`;
   document.body.append(root);
   root.querySelectorAll('details').forEach((d) => (d.open = true));
   window.print();

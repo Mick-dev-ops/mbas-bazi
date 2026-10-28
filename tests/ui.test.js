@@ -37,15 +37,18 @@ it('首頁所有出生欄位使用下拉選單，日期連動及連鎖出生地'
   set('country', '臺灣');
   expect(field('location').value).toBe('tw-0');
 });
-it('產生完整報告、五頁可切換且依據含規則與條件', () => {
+it('產生五頁命主報告，不展示規則、分數與裁決過程', () => {
   submit();
   expect(document.querySelector('#error').textContent).toBe('');
   expect(document.querySelectorAll('.pillar')).toHaveLength(4);
-  expect(document.querySelector('#audit-status').textContent).toContain('一致性校驗通過');
+  expect(document.querySelector('#audit-status').textContent).toContain('報告已完成');
   for (const hash of ['essence', 'finance', 'relations', 'periods', 'elements']) {
     changeRoute(hash);
     expect(document.querySelector(`#page-${hash}`)).toBeTruthy();
-    expect(document.querySelector('.evidence').textContent).toContain('成立條件');
+    expect(document.querySelector('.evidence')).toBeNull();
+    expect(document.querySelector('#report-content').textContent).not.toMatch(
+      /作用力|支持.?負荷比|規則編號|形成原因|成立條件|盤面事實|裁決依據/,
+    );
     expect(document.querySelector('[aria-selected="true"]').getAttribute('href')).toBe('#' + hash);
   }
   expect(document.querySelectorAll('.element-steps')).toHaveLength(5);
@@ -64,7 +67,8 @@ it('完整列印有五個主題，離開列印後恢復畫面', () => {
   window.print = vi.fn(() => {
     content = document.querySelector('#print-report').textContent;
     expect(document.querySelectorAll('#print-report .report-page')).toHaveLength(5);
-    expect(document.querySelector('#print-report details').open).toBe(true);
+    expect(document.querySelector('#print-report details')).toBeNull();
+    expect(content).not.toMatch(/作用力|形成原因|成立條件|裁決依據|mbas-1\./);
   });
   document.querySelector('#print').click();
   expect(window.print).toHaveBeenCalled();
@@ -75,7 +79,7 @@ it('完整列印有五個主題，離開列印後恢復畫面', () => {
 it('方法頁列出版本、出生地與限制；hash重新整理不需伺服器路由', () => {
   changeRoute('method');
   expect(document.querySelector('#methods').hidden).toBe(false);
-  expect(document.querySelector('#methods').textContent).toContain('120 格');
+  expect(document.querySelector('#methods').textContent).not.toMatch(/作用力|規則庫|功能分/);
   expect(document.querySelector('#methods').textContent).toContain('America/New_York');
   expect(document.querySelectorAll('#methods table tbody tr')).toHaveLength(31);
   changeRoute('home');
@@ -92,11 +96,30 @@ it('無效夏令時間顯示可理解錯誤，不產出新命盤', () => {
   submit();
   expect(document.querySelector('#error').textContent).toContain('不存在');
 });
-it('有效出生資料只暫存於本分頁工作階段，匯出按鈕具備JSON下載', () => {
+it('下載只包含命主報告，不輸出內部分析與分數', async () => {
   expect(JSON.parse(sessionStorage.getItem('mbas.birth.v1')).year).toBe('2001');
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
   document.querySelector('#export').click();
   expect(URL.createObjectURL).toHaveBeenCalled();
   expect(click).toHaveBeenCalled();
+  const blob = URL.createObjectURL.mock.calls.at(-1)[0];
+  const text = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsText(blob);
+  });
+  expect(text).not.toMatch(/"analysis"|"traces"|"decisionPath"|"score"|作用力|形成原因|成立條件/);
+  expect(JSON.parse(text).report.pages).toHaveLength(5);
   click.mockRestore();
+});
+
+it('財運頁流年選擇保持在財運頁並更新結論', () => {
+  changeRoute('finance');
+  const s = document.querySelector('#annual-year');
+  s.value = '2028';
+  s.dispatchEvent(new Event('change', { bubbles: true }));
+  expect(document.querySelector('#page-finance')).toBeTruthy();
+  expect(document.querySelector('#report-content').textContent).toContain('2028 年');
+  expect(document.querySelector('.evidence')).toBeNull();
 });
