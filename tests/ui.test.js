@@ -22,7 +22,9 @@ const changeRoute = (hash) => {
   window.dispatchEvent(new HashChangeEvent('hashchange'));
 };
 it('首頁所有出生欄位使用下拉選單，日期連動及連鎖出生地', () => {
-  expect(document.querySelectorAll('#birth-form select')).toHaveLength(9);
+  expect(document.querySelectorAll('#birth-form select')).toHaveLength(8);
+  expect(document.querySelector('select[name="location"]')).toBeNull();
+  expect(document.querySelector('#birth-form').textContent).not.toContain('城市／鄉鎮');
   set('year', 2000);
   set('month', 2);
   expect(field('day').options.length).toBe(29);

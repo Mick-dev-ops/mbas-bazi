@@ -57,6 +57,7 @@ export function god(day, stem) {
   return GODS[{ 0: 0, 1: 2, 2: 4, 3: 6, 4: 8 }[relation] + (same ? 0 : 1)];
 }
 export const VERSION = {
+  ui: 'ui-1.1.1',
   calendar: 'ziping-solar-1.0.0',
   rules: 'mbas-1.1.0',
   templates: 'zh-TW-1.1.0',

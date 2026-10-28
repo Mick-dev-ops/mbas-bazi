@@ -29,7 +29,7 @@ const opts = (values, chosen) =>
     )
     .join('');
 const numbers = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
-app.innerHTML = `<header><a class="brand" href="#home"><span class="seal">命</span><span>MBAS<small>八字命盤解讀專家系統</small></span></a><a class="method-link" href="#method">方法與規則 ↗</a></header><main><section id="birth-section" class="intro"><div class="intro-copy"><div class="section-label">THE STRUCTURE BEHIND YOUR STORY</div><h1>讀懂命局結構，<br>看見選擇的條件。</h1><p>從四柱出發，逐步檢查格局、承格與喜忌。<br>每個重要判斷，都有可以展開的依據。</p><div class="intro-foot"><span>子平節令排盤</span><span>MBAS 規則裁決</span><span>瀏覽器端完成</span></div></div><form id="birth-form"><div class="form-title"><h2>建立你的命盤</h2><span>01 / 出生資料</span></div><div class="fields"><label>性別<select name="sex">${opts(['男', '女'], '男')}</select></label><label>西元出生年<select name="year">${opts(numbers(RANGE.min, RANGE.max).reverse(), 1990)}</select></label><label>月<select name="month">${opts(numbers(1, 12), 6)}</select></label><label>日<select name="day"></select></label><label>出生小時<select name="hour">${opts(numbers(0, 23), 12)}</select></label><label>分鐘<select name="minute">${opts(numbers(0, 59), 0)}</select></label></div><div class="fields places"><label>國家／地區<select name="country"></select></label><label>行政區<select name="region"></select></label><label>城市／鄉鎮<select name="location"></select></label></div><p class="form-note">支援 ${RANGE.min}–${RANGE.max} 年・${LOCATIONS.length} 個地點。採出生地當時法定時間，00:00 換日。<a href="#method">查看清單與慣例</a></p><button class="primary" type="submit">排盤並產生完整解讀 <span>→</span></button><p id="error" role="alert"></p></form></section><section id="result" hidden><div id="chart"></div><div class="report-tools"><span id="audit-status"></span><div><button id="print">列印完整報告 / PDF</button><button id="export">匯出 JSON</button><a href="#home">修改出生資料</a></div></div><nav class="tabs" aria-label="命盤報告頁籤" role="tablist">${['本質', '財運', '緣分', '流年大運', '五行取用喜忌神'].map((n, i) => `<a role="tab" id="tab-${tabs[i]}" aria-controls="page-${tabs[i]}" href="#${tabs[i]}">${n}</a>`).join('')}</nav><div id="report-content"></div></section><div id="methods" hidden></div></main><footer><b>MBAS</b> · 規則可檢查，判斷有條件。<span>${VERSION.calendar} / ${VERSION.rules}</span></footer>`;
+app.innerHTML = `<header><a class="brand" href="#home"><span class="seal">命</span><span>MBAS<small>八字命盤解讀專家系統</small></span></a><a class="method-link" href="#method">方法與規則 ↗</a></header><main><section id="birth-section" class="intro"><div class="intro-copy"><div class="section-label">THE STRUCTURE BEHIND YOUR STORY</div><h1>讀懂命局結構，<br>看見選擇的條件。</h1><p>從四柱出發，逐步檢查格局、承格與喜忌。<br>每個重要判斷，都有可以展開的依據。</p><div class="intro-foot"><span>子平節令排盤</span><span>MBAS 規則裁決</span><span>瀏覽器端完成</span></div></div><form id="birth-form"><div class="form-title"><h2>建立你的命盤</h2><span>01 / 出生資料</span></div><div class="fields"><label>性別<select name="sex">${opts(['男', '女'], '男')}</select></label><label>西元出生年<select name="year">${opts(numbers(RANGE.min, RANGE.max).reverse(), 1990)}</select></label><label>月<select name="month">${opts(numbers(1, 12), 6)}</select></label><label>日<select name="day"></select></label><label>出生小時<select name="hour">${opts(numbers(0, 23), 12)}</select></label><label>分鐘<select name="minute">${opts(numbers(0, 59), 0)}</select></label></div><div class="fields places"><label>國家／地區<select name="country"></select></label><label>行政區<select name="region"></select></label><input type="hidden" name="location"></div><p class="form-note">支援 ${RANGE.min}–${RANGE.max} 年・${LOCATIONS.length} 個支援行政區。採所選行政區當時法定時間，00:00 換日。<a href="#method">查看清單與慣例</a></p><button class="primary" type="submit">排盤並產生完整解讀 <span>→</span></button><p id="error" role="alert"></p></form></section><section id="result" hidden><div id="chart"></div><div class="report-tools"><span id="audit-status"></span><div><button id="print">列印完整報告 / PDF</button><button id="export">匯出 JSON</button><a href="#home">修改出生資料</a></div></div><nav class="tabs" aria-label="命盤報告頁籤" role="tablist">${['本質', '財運', '緣分', '流年大運', '五行取用喜忌神'].map((n, i) => `<a role="tab" id="tab-${tabs[i]}" aria-controls="page-${tabs[i]}" href="#${tabs[i]}">${n}</a>`).join('')}</nav><div id="report-content"></div></section><div id="methods" hidden></div></main><footer><b>MBAS</b> · 規則可檢查，判斷有條件。<span>${VERSION.calendar} / ${VERSION.rules}</span></footer>`;
 const form = document.querySelector('#birth-form'),
   field = (n) => form.elements.namedItem(n);
 function days() {
@@ -47,11 +47,13 @@ function regions() {
   locations();
 }
 function locations() {
-  field('location').innerHTML = LOCATIONS.filter(
+  const matches = LOCATIONS.filter(
     (l) => l.country === field('country').value && l.region === field('region').value,
-  )
-    .map((l) => `<option value="${l.id}">${l.city}</option>`)
-    .join('');
+  );
+  const zones = new Set(matches.map((l) => l.zone));
+  // The city selector is removed. Resolve a supported region only when its
+  // bundled locations share one legal-time zone; never silently guess a zone.
+  field('location').value = matches.length && zones.size === 1 ? matches[0].id : '';
 }
 field('country').innerHTML = opts([...new Set(LOCATIONS.map((l) => l.country))], '臺灣');
 regions();
@@ -189,7 +191,8 @@ try {
     regions();
     field('region').value = analysis.chart.birth.place.region;
     locations();
-    field('location').value = saved.location;
+    // Resolve the selected region again instead of restoring a city choice.
+    locations();
   }
 } catch {
   /* 無效或禁用的工作階段資料不影響首頁 */
