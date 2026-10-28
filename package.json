@@ -1,0 +1,36 @@
+{
+  "name": "mbas-bazi",
+  "version": "1.0.0",
+  "description": "繁體中文 MBAS 八字命盤解讀專家系統",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:dist": "node scripts/verify-dist.mjs",
+    "check": "npm test && npm run build && npm run test:dist",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "update:tz": "node scripts/update-timezones.mjs",
+    "docs:rules": "node scripts/update-rule-docs.mjs && prettier --write docs/RULES.md"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "astronomy-engine": "2.1.19",
+    "moment-timezone": "0.6.0"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0",
+    "prettier": "3.5.3",
+    "vite": "6.4.1",
+    "vitest": "3.2.4"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
