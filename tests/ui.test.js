@@ -51,7 +51,7 @@ it('產生五頁命主報告，不展示規則、分數與裁決過程', () => {
     );
     expect(document.querySelector('[aria-selected="true"]').getAttribute('href')).toBe('#' + hash);
   }
-  expect(document.querySelectorAll('.element-steps')).toHaveLength(5);
+  expect(document.querySelectorAll('.report-card[data-element]')).toHaveLength(5);
 });
 it('流年選單與大運按鈕能更新報告', () => {
   changeRoute('periods');
@@ -132,6 +132,12 @@ it('五行頁切換年份，同步更新所在大運與當期五行建議', () =
   const text = document.querySelector('#report-content').textContent;
   expect(text).toContain('2031 年 辛亥');
   expect(text).toContain('丁亥大運');
-  expect(text).toContain('當期優先順序');
+  expect(text).toContain('今年優先順序');
   expect(text).not.toMatch(/作用力|形成原因|成立條件/);
+});
+it('birth region field is labelled as birthplace and detailed chart remains visible', () => {
+  changeRoute('home');
+  expect(field('region').closest('label').textContent).toMatch(/^出生地點/);
+  expect(document.querySelector('#chart').textContent).toContain('天干十神');
+  expect(document.querySelector('#chart').textContent).toContain('藏干與十神');
 });

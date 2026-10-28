@@ -733,3 +733,37 @@ th {
   line-height: 1.95;
   margin: 1em 0;
 }
+
+.pillar-hidden {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.pillar-hidden li {
+  margin: 10px 0;
+}
+.pillar h4 {
+  font-size: 12px;
+  margin: 18px 0 8px;
+}
+.pillar-meta {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.element-overall h4,
+.element-annual h4 {
+  font-size: 18px;
+  margin: 26px 0 12px;
+}
+.element-annual {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid #d9dfd7;
+}
+@media (max-width: 540px) {
+  .pillars {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

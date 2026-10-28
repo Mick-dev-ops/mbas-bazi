@@ -1,3 +1,4 @@
+import { functionalPractice } from './templates.js';
 import { solarTerms } from '../calendar/solar.js';
 import { relationshipCards } from './relationship.js';
 import { composePeriod, currentElementReport, contextFor } from './period-story.js';
@@ -212,7 +213,7 @@ function elementCard(a, x) {
     ? `本命目前不適合繼續加強這個方向。若再增加，較容易出現：${states[2]}`
     : fav
       ? `${states[1]}原本較卡住的事情，會先從這個環節改善。`
-      : `這不是本命優先方向。適量時可能${states[1]}，但不能取代目前最需要處理的問題。`;
+      : `這不是本命優先方向。適量時可能${states[1].replace(/[。；]$/, '')}，但不能取代目前最需要處理的問題。`;
   return card(
     `${x.name}｜${x.roles.join('、')}`,
     banned
@@ -237,7 +238,7 @@ function elementCard(a, x) {
               '把專業整理成可交付的成果、工具或服務，讓做法能被理解並重複使用。',
               '讓成果接到明確需求，分清投入、回報與分配，為適合的機會留下餘裕。',
             ][x.element]
-          : ELEMENT_STATES[x.element].practice,
+          : functionalPractice(a, x).action,
     },
   );
 }
@@ -439,28 +440,44 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const natalOrder = a.use.order.map((e) => ELEMENTS[e]).join(' > ');
   const elements = [
     card(
-      '一 當年大運流年與五行運用總評',
-      `${referenceYear} 年 ${year.pillar.text}；${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}。當期優先順序：${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。`,
+      '一 整體五行取用總評',
+      `整體五行優先順序：${natalOrder}。`,
       [
-        `本命使用順序維持${natalOrder}。當期的調整重點是${active.use.summary}`,
+        financial
+          ? '整體較需要讓專業接到實際需求，再以清楚的權責與交付保護累積。水、木、金分別協助機會承接、責任收斂與專業表達；火土保留必要程度，過度加強容易回到準備過多、責任集中與付出難以留下的狀態。'
+          : `整體以${a.use.core === null ? '維持既有配合' : ELEMENTS[a.use.core] + '所帶來的改善'}為主，並依序讓其他有利方向承接。排在後面的五行保留必要功能，不把額外投入當成主要解法。`,
+      ],
+      { scope: 'overall' },
+    ),
+    card(
+      '二 今年大運流年與五行調整',
+      `${referenceYear} 年 ${year.pillar.text}；${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}。今年優先順序：${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。`,
+      [
+        active.use.summary,
         ...yearUses.map(
           (x) =>
             `${date(a, x.p.start)} 至 ${date(a, x.p.end)}：${x.p.luck?.text || '起運前'}${x.p.luck ? '大運' : ''}，${x.use.order.map((e) => ELEMENTS[e]).join(' > ')}。${composePeriod(a, x.p, { age: ageAt(a, x.p.start), stage: stageOf(ageAt(a, x.p.start)) }).summary}`,
         ),
       ],
+      { scope: 'annual' },
     ),
-    ...active.use.order.map((e) => {
+    ...a.use.order.map((e) => {
       const base = elementCard(a, a.use.elements[e]),
         growth = active.use.elements[e];
-      return {
-        ...base,
-        title: `${ELEMENTS[e]}｜${growth.status}`,
+      const annual = {
+        year: referenceYear,
         conclusion: `${referenceYear} 年的${growth.status}。${growth.current}`,
         before: growth.current + ' ' + base.before,
         after: growth.growth,
+        under: base.under,
         balanced: growth.balanced,
         over: growth.excess,
         practice: growth.practice + ' ' + growth.condition,
+      };
+      return {
+        ...base,
+        overall: { ...base },
+        annual,
         periodAdjustments: yearUses.map((x) => ({
           label: `${date(a, x.p.start)} 至 ${date(a, x.p.end)}・${x.p.luck?.text || '起運前'}・${year.pillar.text}`,
           text: x.use.elements[e].growth + ' ' + x.use.elements[e].condition,

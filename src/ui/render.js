@@ -1,5 +1,12 @@
 import { RULES } from '../data/rules.js';
-import { ELEMENTS, STEMS, BRANCHES, PILLAR_NAMES, VERSION } from '../data/constants.js';
+import {
+  ELEMENTS,
+  STEMS,
+  BRANCHES,
+  PILLAR_NAMES,
+  STEM_ELEMENT,
+  VERSION,
+} from '../data/constants.js';
 import { LOCATIONS, RANGE } from '../data/locations.js';
 import { formatTime, timezoneVersion } from '../calendar/time.js';
 import { CLIMATE } from '../data/climate.js';
@@ -16,16 +23,20 @@ export function renderCard(c) {
   const table = c.table
     ? `<div class="table-wrap"><table><thead><tr>${c.table.headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${c.table.rows.map((row) => `<tr>${row.map((v) => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
     : '';
+  const stateList = (x, extra = '') =>
+    `<dl class="element-steps"><dt>使用前</dt><dd>${esc(x.before)}</dd><dt>使用後</dt><dd>${esc(x.after)}</dd><dt>過少時</dt><dd>${esc(x.under)}</dd><dt>剛剛好時</dt><dd>${esc(x.balanced)}</dd><dt>過多時</dt><dd>${esc(x.over)}</dd><dt>生活中的運用</dt><dd>${esc(x.practice)}</dd>${extra}</dl>`;
   const states =
     c.element !== undefined
-      ? `<dl class="element-steps"><dt>使用前</dt><dd>${esc(c.before)}</dd><dt>使用後</dt><dd>${esc(c.after)}</dd><dt>過少時</dt><dd>${esc(c.under)}</dd><dt>剛剛好時</dt><dd>${esc(c.balanced)}</dd><dt>過多時</dt><dd>${esc(c.over)}</dd><dt>生活中的運用</dt><dd>${esc(c.practice)}</dd>${(c.periodAdjustments || []).map((p) => `<dt>${esc(p.label)}</dt><dd>${esc(p.text)}</dd>`).join('')}</dl>`
+      ? c.overall && c.annual
+        ? `<section class="element-overall"><h4>整體運勢</h4><p>${esc(c.overall.conclusion)}</p>${stateList(c.overall)}</section><section class="element-annual"><h4>今年運勢（${esc(c.annual.year)} 年）</h4><p>${esc(c.annual.conclusion)}</p>${stateList(c.annual, (c.periodAdjustments || []).map((p) => `<dt>${esc(p.label)}</dt><dd>${esc(p.text)}</dd>`).join(''))}</section>`
+        : stateList(c)
       : '';
-  return `<article class="report-card"><h3>${esc(c.title)}</h3><p class="conclusion">${esc(c.conclusion)}</p>${(c.paragraphs || []).map((p) => `<p class="narrative-paragraph">${esc(p)}</p>`).join('')}${states}${table}</article>`;
+  return `<article class="report-card"${c.element !== undefined ? ` data-element="${c.element}"` : ''}><h3>${esc(c.title)}</h3><p class="conclusion">${esc(c.conclusion)}</p>${(c.paragraphs || []).map((p) => `<p class="narrative-paragraph">${esc(p)}</p>`).join('')}${states}${table}</article>`;
 }
 export function chartOverview(a) {
   const c = a.chart,
     b = c.birth;
-  return `<section class="overview"><div class="section-label">命盤總覽</div><div class="overview-head"><div><h2>${esc(b.place.region)}・${b.year} 年 ${b.month} 月 ${b.day} 日</h2><p>${esc(fmt(b.ms, b.zone))} · ${esc(b.sex)} · ${esc(b.place.country + ' / ' + b.place.region)}</p></div></div><div class="pillars">${c.pillars.map((p, i) => `<div class="pillar"><span>${PILLAR_NAMES[i]}</span><div class="han">${STEMS[p.stem]}<br>${BRANCHES[p.branch]}</div></div>`).join('')}</div></section>`;
+  return `<section class="overview"><div class="section-label">命盤總覽</div><div class="overview-head"><div><h2>${esc(b.place.region)}・${b.year} 年 ${b.month} 月 ${b.day} 日</h2><p>${esc(fmt(b.ms, b.zone))} · ${esc(b.sex)} · ${esc(b.place.country + ' / ' + b.place.region)}</p><p class="muted">出生地法定時區 ${esc(b.zone)} ${esc(b.offset)} · 00:00 換日</p></div></div><div class="pillars">${c.pillars.map((p, i) => `<div class="pillar"><span>${PILLAR_NAMES[i]}</span><p class="god">天干十神：${esc(p.god)}</p><div class="han">${STEMS[p.stem]}<br>${BRANCHES[p.branch]}</div><p class="pillar-meta">天干：${p.stem % 2 ? '陰' : '陽'}${ELEMENTS[STEM_ELEMENT[p.stem]]}<br>地支：${p.branch % 2 ? '陰' : '陽'}${ELEMENTS[STEM_ELEMENT[p.hidden[0].stem]]}</p><h4>藏干與十神</h4><ul class="pillar-hidden">${p.hidden.map((h, j) => `<li><b>${STEMS[h.stem]}</b>・${ELEMENTS[STEM_ELEMENT[h.stem]]}・${esc(h.god)}<br><small>${['本氣', '中氣', '餘氣'][j]}</small></li>`).join('')}</ul></div>`).join('')}</div><div class="term-grid"><p><small>出生前一節</small><br><b>${esc(c.adjacent.previous.name)}</b> ${esc(fmt(c.adjacent.previous.ms, b.zone))}</p><p><small>出生後一節</small><br><b>${esc(c.adjacent.next.name)}</b> ${esc(fmt(c.adjacent.next.ms, b.zone))}</p></div></section>`;
 }
 export function patternAudit(a) {
   return `<article class="report-card"><h3>格局候選逐項裁決</h3><p>月令候選：${a.patterns.monthly.map((x) => `${x.god}（${x.rank === 0 ? '本氣' : '藏氣'}、${x.exposed ? '透出' : '未透'}）`).join('、')}</p><p>月令發用裁決：${esc(a.patterns.monthJudgment.status)}；支持：${esc(a.patterns.monthJudgment.support.join('；'))}；受損：${esc(a.patterns.monthJudgment.damage.join('；') || '未觸發門檻')}；現有相神：${esc(a.patterns.monthJudgment.rescue.join('；') || '尚未達個別可用門檻')}</p>${evidence([a.patterns.monthTrace])}${a.patterns.candidates.map((p) => `<details><summary>${p.name} <span class="tag">${p.status}</span></summary><p><b>支持證據：</b>${esc(p.support.join('；') || '無足夠參與十神')}</p><p><b>受損證據：</b>${esc(p.damage.join('；') || '本版未觸發損傷門檻')}</p><p><b>救應證據：</b>${esc(p.rescue.join('；') || '未判具體救應；須依主病檢查候選')}</p>${evidence([p.trace])}</details>`).join('')}</article><article class="report-card"><h3>干支作用與作用前後</h3>${a.action.effects.length ? a.action.effects.map((x) => `<details><summary>${esc(x.type)}｜${esc(x.detail)}</summary>${x.before ? `<p>受作用位置：${(x.affectedPositions || x.positions).map((i) => PILLAR_NAMES[i] || '歲運').join(' / ')}；作用係數：${x.before.map((n) => n.toFixed(3)).join(' / ')} → ${x.after.map((n) => n.toFixed(3)).join(' / ')}</p>` : ''}${evidence([x.trace])}</details>`).join('') : '<p>未觸發本版互動規則。</p>'}</article><article class="report-card"><h3>得令、得地、得勢：正反證據</h3><p>支持：${esc(a.strength.for.join('；'))}</p><p>負荷：${esc(a.strength.against.join('；'))}</p><p>通根：${esc(a.strength.roots.map(a.facts.factText).join('；') || '日主同氣根未見')}</p>${evidence(a.strength.traces)}</article>`;

@@ -129,20 +129,6 @@ export function composePeriod(a, p, slice) {
     .slice(0, 2)
     .map((x) => x.statement)
     .join('');
-  const displayFocus = (g) =>
-    slice.age < 18
-      ? {
-          peer: '自主與同儕位置',
-          output: '專長、作品與表達',
-          wealth: '學習資源與用度',
-          authority: '學校要求與升學目標',
-          support: '方法與師長支持',
-        }[GOD_GROUP[g]]
-      : CHANNELS[g].focus;
-  const background =
-    p.annual && p.luck
-      ? `這一年仍在${p.luck.text}大運的${displayFocus(bg)}背景中，年度更突出${displayFocus(stem)}與${displayFocus(branch)}。`
-      : `這段大運以${displayFocus(stem)}為外在主題，日常較落在${displayFocus(branch)}。`;
   // No identical bucket paragraph: channel pair, structural state, actual palace
   // effects and age lens all participate in the emitted semantic content.
   const secondary = HIDDEN[main.branch]
@@ -165,7 +151,7 @@ export function composePeriod(a, p, slice) {
               ? '生活自主與既有經驗的延續比增加責任更重要。'
               : '';
   const money = `${lifeFocus}${mainChannel}${secondaryText}${slice.age >= 18 && slice.age < 60 ? pair : ''}${profile}${actions.find((x) => x.positions.includes(1) || x.positions.includes(2))?.statement || ''}`;
-  const summary = `${background}${slice.age < 18 ? stemText : slice.age >= 60 ? branchText : pair}${place || profile}`;
+  const summary = `${slice.age >= 60 ? branchText : stemText}${stem === branch ? '' : branchText === stemText ? '' : slice.age >= 60 ? stemText : branchText}${slice.age >= 18 && slice.age < 60 ? pair : ''}${place || profile}`;
   let relation =
     slice.age < 18
       ? `${CHANNELS[stem].school}同學與家人之間的期待容易影響心情，學會表達自己的安排是本期人際課題。`

@@ -62,12 +62,15 @@ it('current five-element adjustments depend on the selected year and preserve na
   const before = JSON.stringify(a.use);
   const x = buildClientReports(a, 2025).pages[4],
     y = buildClientReports(a, 2026).pages[4];
-  expect(x.cards[0].conclusion).toContain('2025 年 乙巳');
-  expect(y.cards[0].conclusion).toContain('2026 年 丙午');
-  expect(x.cards[0].conclusion).not.toBe(y.cards[0].conclusion);
+  expect(x.cards.find((c) => c.scope === 'annual').conclusion).toContain('2025 年 乙巳');
+  expect(y.cards.find((c) => c.scope === 'annual').conclusion).toContain('2026 年 丙午');
+  expect(x.cards.find((c) => c.scope === 'annual').conclusion).not.toBe(
+    y.cards.find((c) => c.scope === 'annual').conclusion,
+  );
   for (const c of y.cards.filter((c) => c.element !== undefined)) {
     expect(c.periodAdjustments.length).toBeGreaterThan(0);
-    expect(c.after).toContain('再加強');
+    expect(c.annual.after).toContain('再加強');
+    expect(c.overall.after.length).toBeGreaterThan(15);
   }
   expect(JSON.stringify(a.use)).toBe(before);
 });
@@ -89,4 +92,10 @@ it('period priority comes from an explicit disease/rescue or natal use; natal co
   expect(
     x.elements.filter((e) => [1, 2].includes(e.element)).every((e) => e.status !== '本期優先'),
   ).toBe(true);
+});
+it('decade development opens with concrete and different developments instead of a repeated topic preamble', () => {
+  const reports = a.chart.luck.map((l) => clientLuck(a, l)[0]);
+  expect(reports.every((p) => !p.summary.startsWith('這段大運以'))).toBe(true);
+  expect(reports.every((p) => !p.summary.includes('為外在主題'))).toBe(true);
+  expect(new Set(reports.map((p) => p.summary.split('。')[0])).size).toBe(10);
 });

@@ -88,3 +88,44 @@ it('different natal charts produce different conclusions without changing adjudi
   expect(JSON.stringify(x)).not.toBe(JSON.stringify(buildClientReports(b)));
   expect(JSON.stringify(a.use)).toBe(before);
 });
+
+it('four-pillar overview restores gods, stem/branch elements, hidden stems and adjacent terms without analysis scores', () => {
+  const html = chartOverview(a);
+  for (const t of [
+    '天干十神',
+    '七殺',
+    '偏財',
+    '日主',
+    '劫財',
+    '藏干與十神',
+    '本氣',
+    '中氣',
+    '餘氣',
+    '立秋',
+    '白露',
+    'Asia/Taipei',
+  ])
+    expect(html).toContain(t);
+  expect(html).not.toMatch(forbidden);
+});
+it('relationship chapter ends after child section and removes the sixth window section', () => {
+  const p = buildClientReports(a, 2026).pages[2];
+  expect(p.cards).toHaveLength(5);
+  expect(JSON.stringify(p)).not.toContain('近期姻緣、桃花與家庭窗口');
+});
+it('overall element order comes first and each element has independent overall and annual states', () => {
+  const x = buildClientReports(a, 2025).pages[4],
+    y = buildClientReports(a, 2026).pages[4];
+  expect(x.cards[0].scope).toBe('overall');
+  expect(x.cards[1].scope).toBe('annual');
+  expect(x.cards[0].conclusion).toBe(y.cards[0].conclusion);
+  for (const c of x.cards.filter((c) => c.element !== undefined)) {
+    expect(c.overall).toBeTruthy();
+    expect(c.annual.year).toBe(2025);
+    const next = y.cards.find((v) => v.element === c.element);
+    expect(c.overall).toEqual(next.overall);
+    expect(c.annual.after).not.toBe(next.annual.after);
+    const html = renderCard(c);
+    expect(html.indexOf('整體運勢')).toBeLessThan(html.indexOf('今年運勢'));
+  }
+});
