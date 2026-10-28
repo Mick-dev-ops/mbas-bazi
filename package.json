@@ -1,6 +1,6 @@
 {
   "name": "mbas-bazi",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "繁體中文 MBAS 八字命盤解讀專家系統",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -9,11 +9,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:dist": "node scripts/verify-dist.mjs",
-    "check": "npm test && npm run build && npm run test:dist",
+    "check": "npm test && npm run test:scenarios && npm run build && npm run test:dist",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "update:tz": "node scripts/update-timezones.mjs",
-    "docs:rules": "node scripts/update-rule-docs.mjs && prettier --write docs/RULES.md"
+    "docs:rules": "node scripts/update-rule-docs.mjs && prettier --write docs/RULES.md",
+    "test:scenarios": "node scripts/verify-period-coverage.mjs"
   },
   "keywords": [],
   "author": "",

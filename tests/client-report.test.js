@@ -27,7 +27,7 @@ it('public reports and overview contain conclusions only; internal evidence is r
 });
 it('finance begins with a direct summary and includes dated age-aware luck and annual conclusions', () => {
   const p = buildClientReports(a).pages[1];
-  expect(p.cards[0].title).toBe('財運總評');
+  expect(p.cards[0].title).toBe('一 財富發展潛力與收入來源');
   expect(p.cards[0].conclusion).toContain('有賺錢能力');
   const table = p.cards.find((c) => c.table).table;
   expect(table.rows.some((r) => r[0].includes('2024-02-28') && r[2] === '乙亥')).toBe(true);
@@ -62,9 +62,9 @@ it('stage boundaries use full local birthdays, handle leap birthdays, and preser
 it('relationships make direct character and interaction statements without teaching chart interpretation or assuming marriage', () => {
   const p = buildClientReports(a).pages[2];
   const t = JSON.stringify(p);
-  expect(p.cards[0].title).toBe('感情總評');
+  expect(p.cards[0].title).toBe('一 伴侶特質與相遇方式');
   expect(t).not.toMatch(/配偶星|日支|透干|十神|命盤可以|查看|你已婚|你的太太/);
-  expect(p.cards.some((c) => c.title === '相處中的主要矛盾')).toBe(true);
+  expect(p.cards.some((c) => c.title.includes('戀愛模式'))).toBe(true);
 });
 it('each element includes distinct before/after and low/balanced/excess states; unfavorable elements are not prescribed', () => {
   const p = buildClientReports(a).pages[4];

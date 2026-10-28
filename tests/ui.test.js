@@ -123,3 +123,15 @@ it('財運頁流年選擇保持在財運頁並更新結論', () => {
   expect(document.querySelector('#report-content').textContent).toContain('2028 年');
   expect(document.querySelector('.evidence')).toBeNull();
 });
+
+it('五行頁切換年份，同步更新所在大運與當期五行建議', () => {
+  changeRoute('elements');
+  const picker = document.querySelector('#annual-year');
+  picker.value = '2031';
+  picker.dispatchEvent(new Event('change', { bubbles: true }));
+  const text = document.querySelector('#report-content').textContent;
+  expect(text).toContain('2031 年 辛亥');
+  expect(text).toContain('丁亥大運');
+  expect(text).toContain('當期優先順序');
+  expect(text).not.toMatch(/作用力|形成原因|成立條件/);
+});

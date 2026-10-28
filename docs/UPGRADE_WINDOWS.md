@@ -2,7 +2,7 @@
 
 先保留原本專案的備份。將這個 ZIP 解壓縮，將 `mbas-bazi` 內的檔案覆蓋到 `D:\Rex\mbas-bazi`。保留該資料夾原本的 `.git`，不要清空 GitHub，也不要刪除 Git 紀錄。
 
-確認沒有多套一層 `mbas-bazi`，並確認 `package.json` 的版本為 1.2.0。開啟 CMD：
+確認沒有多套一層 `mbas-bazi`，並確認 `package.json` 的版本為 1.3.0。開啟 CMD：
 
 ```cmd
 cd /d "D:\Rex\mbas-bazi"
@@ -23,3 +23,7 @@ Actions 成功後重新整理網站，確認「方法說明」中顯示 `mbas-1.
 ## 1.2.0 更新確認
 
 以本包內容覆蓋現有原始碼並保留 .git。npm ci、npm run check 成功後提交推送。提交訊息可用 `Rewrite client reports and add age-aware timelines`。部署完成後 Ctrl+F5，頁尾顯示 v1.2.0。舊 PDF 仍需重新產生。
+
+## 1.3.0 更新
+
+覆蓋原始碼並保留 .git，執行 npm ci、npm run check 後再提交推送。Actions會新增執行 test:scenarios。提交訊息可用 `Rebuild period scenarios and contextual element guidance`。部署成功後頁尾顯示 v1.3.0。預覽與第三章均應顯示姻緣、桃花與子女；五行頁的年份切換會更新所在大運與調整內容。

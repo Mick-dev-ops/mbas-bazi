@@ -1,5 +1,8 @@
+import { solarTerms } from '../calendar/solar.js';
+import { relationshipCards } from './relationship.js';
+import { composePeriod, currentElementReport, contextFor } from './period-story.js';
 import moment from 'moment-timezone/moment-timezone.js';
-import { ELEMENTS, STEM_ELEMENT, GODS, HIDDEN } from '../data/constants.js';
+import { ELEMENTS, STEM_ELEMENT, GODS, HIDDEN, god } from '../data/constants.js';
 import { periodImpact, annualReport } from '../engine/periods.js';
 import { formatTime } from '../calendar/time.js';
 
@@ -45,126 +48,23 @@ export function lifeSlices(a, start, end) {
       stage: stageOf(ageAt(a, s)),
     }));
 }
-function direction(a, p) {
-  const entering = p.annual || p.luck;
-  if (!entering) return '穩步累積期';
-  const kind = (e) => {
-    const roles = a.use.elements[e].roles;
-    return roles.includes('主要忌神')
-      ? 'limited'
-      : roles.some((r) => ['核心用神', '先決用神', '相神', '輔助喜神'].includes(r))
-        ? 'helpful'
-        : 'conditional';
-  };
-  const stem = kind(STEM_ELEMENT[entering.stem]),
-    branch = kind(STEM_ELEMENT[HIDDEN[entering.branch][0]]);
-  const disturbed = p.actions.some((x) => /沖|刑/.test(x.type));
-  if (stem === 'helpful' && branch === 'helpful') return disturbed ? '調整中推進' : '發展推進期';
-  if (stem === 'helpful' || branch === 'helpful') return '機會與責任並增';
-  if (stem === 'limited' && branch === 'limited') return '壓力整理期';
-  return disturbed ? '轉換整理期' : '穩步累積期';
-}
 export function describePeriod(a, p, slice) {
-  const age = slice.age,
-    stage = slice.stage,
-    theme = direction(a, p);
-  const improving = theme === '發展推進期' || theme === '調整中推進' || theme === '機會與責任並增';
-  const tight = theme === '壓力整理期';
-  let domains, money, relation, summary;
-  if (age < 12) {
-    domains = ['學習習慣', '家庭支持', '同儕相處'];
-    summary = improving
-      ? '較容易在熟悉的學習安排中建立信心，練習成果與師長支持較能相互配合。'
-      : tight
-        ? '課業要求或家庭安排容易使生活節奏緊繃，表現可能隨環境穩定度起伏。'
-        : '這段時間著重規律與基礎能力；換老師、換班級或家庭安排的變化，會較直接地影響心情與適應。';
-    money = improving
-      ? '家人提供的學習資源較能轉成興趣與能力，主要表現在課程、工具或活動上的支持。'
-      : tight
-        ? '教育、活動或家庭生活的安排較容易感到受限，重點是可取得的支持與日常用度。'
-        : '金錢主題以家庭提供的日常用度與學習資源為主，逐漸形成對使用與分配的習慣。';
-    relation = '人際重點在家人、師長與同學：較在意被公平對待，也會透過同儕互動逐步建立界線。';
-  } else if (age < 18) {
-    domains = ['課業與升學', '自我認同', '同儕關係'];
-    summary = improving
-      ? '專長與興趣較容易找到投入方向，在學習、競賽或社團中有累積表現的空間。'
-      : tight
-        ? '課業期待與自主需求容易拉扯，可能對比較、規範或同儕評價較敏感。'
-        : '重點在探索適合自己的學習方式與升學方向；人際圈與自我定位的調整比職場升遷更為突出。';
-    money = improving
-      ? '較適合把可用資源投入專長與作品，收穫首先表現在能力與選擇增加。'
-      : tight
-        ? '課程、活動與同儕生活上的花費可能增加，容易感到可用資源不夠分配。'
-        : '金錢面以零用、教育費與個人支出習慣為主，生活資源仍主要來自家庭與學習安排。';
-    relation =
-      '關係重點是同學、朋友及團體歸屬；容易在分工、公平與個人立場上磨合，逐步建立自己的相處界線。';
-  } else if (age < 25) {
-    domains = ['進修與職涯探索', '初期收入', '人際與感情探索'];
-    summary = improving
-      ? '專長開始有機會接到實習、第一份工作或具體成果，方向逐漸比單純多方嘗試更清楚。'
-      : tight
-        ? '學業、初入職場與生活開支可能同時需要投入，容易忙於適應而暫時看不出累積。'
-        : '這段時間以試探方向與建立獨立生活能力為主；成效通常先體現在經驗與技能，之後才逐步反映於收入。';
-    money = improving
-      ? '初期收入與專長連結較有發展空間，可能從實習、工作或小型服務開始累積。'
-      : tight
-        ? '收入基礎仍在建立，進修與生活成本容易先行，短期結餘較不穩定。'
-        : '財務屬於起步階段，收入方式與生活成本都還在調整，累積速度不宜直接比照成熟職涯。';
-    relation =
-      '相處圈隨求學與工作擴大，較容易從共同活動建立好感；生活方向尚在形成，吸引與長期承諾不一定同步。';
-  } else if (age < 60) {
-    domains = ['工作與收入', '責任分配', '親密關係與生活安排'];
-    summary = improving
-      ? '已有能力較容易接到更明確的機會，工作範圍、報酬或對外合作有推進空間；變動也可能同時增加需要協調的事情。'
-      : tight
-        ? '責任與成本容易走在回報前面，日程可能更滿，但成果留下來的速度未必同步。'
-        : '職涯與生活進入累積與取捨並重的階段，熟悉領域的持續成果比同時增加方向更有份量。';
-    money = improving
-      ? '收入成長的機會較能與既有專業接軌，適合被理解為成果逐步兌現的階段；分配與後續成本仍會影響實際留下的餘裕。'
-      : tight
-        ? '財務壓力較容易來自責任擴大、共同支出或交付成本，可能出現工作量增加而可用結餘沒有明顯改善的情形。'
-        : '財運偏向逐步累積，收入改善通常隨責任、技能與穩定交付推進，未見足以直接指定暴增財富的訊號。';
-    const touched = p.affected.includes('日常相處與伴侶協調');
-    relation = touched
-      ? '感情與日常安排較容易進入調整期。已有伴侶者，時間與責任的分配較受關注；單身者，則可能更明確地辨識自己願意接受的相處方式，並不等同必然結婚或分離。'
-      : improving
-        ? '關係較能透過共同目標與實際支持向前發展，吸引力來自相處中的可靠與配合。'
-        : '親密關係較受工作節奏與個人安排影響，日常回應的穩定度比一時熱度更能決定關係走向。';
-  } else {
-    domains = ['生活節奏', '既有成果與用度', '家人與社交支持'];
-    summary = improving
-      ? '已有經驗與人際連結仍有發揮空間，生活較適合圍繞熟悉且能持續參與的事物展開。'
-      : tight
-        ? '較需要留意責任是否超出想維持的生活節奏，長期代為處理家人事務容易壓縮個人餘裕。'
-        : '生活重點轉向既有成果的延續、時間自主與人際支持，較適合維持能長期參與且負擔合宜的安排。';
-    money = improving
-      ? '較有條件讓既有成果支持生活安排，收入與用度的穩定感比擴張規模更重要。'
-      : tight
-        ? '家人支持、生活安排或持續責任可能增加支出，較容易感到資源被分散。'
-        : '財務主題以生活用度與既有成果的延續為主；生活安排是否舒適，較取決於用度與可持續支持是否相稱。';
-    relation =
-      '關係重點在陪伴、個人空間與家人之間的責任界線，長期相處的舒適程度比形式上的角色更重要。';
-  }
-  if (theme === '機會與責任並增') {
-    money +=
-      age >= 25 && age < 60
-        ? ' 這段時間的機會與責任會一起增加，收入改善仍可能伴隨較多投入，實際餘裕通常比表面進展慢一些。'
-        : ' 新機會也會伴隨適應與投入，節奏較難一開始就完全穩定。';
-  }
+  const story = composePeriod(a, p, slice);
   return {
-    title: `${stage}・${theme}`,
-    stage,
-    theme,
-    domains,
-    summary,
-    money,
-    relation,
-    age,
+    title: `${slice.stage}・${story.theme}`,
+    stage: slice.stage,
+    theme: story.theme,
+    domains: slice.age < 18 ? ['學習與升學', '家庭支持', '同儕相處'] : story.domains,
+    summary: story.summary,
+    money: story.money,
+    relation: story.relation,
+    scenarios: story.scenarios,
+    age: slice.age,
     ageEnd: slice.ageEnd,
     start: slice.start,
     end: slice.end,
-    dateLabel: `${date(a, slice.start)} 至 ${date(a, slice.end)}（不含）`,
-    ageLabel: age === slice.ageEnd ? `${age} 歲` : `${age}–${slice.ageEnd} 歲`,
+    dateLabel: `${date(a, slice.start)} 至 ${date(a, slice.end)}`,
+    ageLabel: slice.age === slice.ageEnd ? `${slice.age} 歲` : `${slice.age}–${slice.ageEnd} 歲`,
   };
 }
 export function clientLuck(a, luck) {
@@ -341,7 +241,14 @@ function elementCard(a, x) {
     },
   );
 }
-export function buildClientReports(a) {
+export function currentReferenceYear(a, now = Date.now()) {
+  const calendarYear = Number(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Taipei', year: 'numeric' }).format(now),
+  );
+  const y = now < solarTerms(calendarYear)[2].ms ? calendarYear - 1 : calendarYear;
+  return Math.max(a.chart.solarYear, Math.min(y, a.chart.birth.year + 110));
+}
+export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const g = a.facts.gods;
   const ranked = [...GODS].sort((x, y) => g[y] - g[x] || GODS.indexOf(x) - GODS.indexOf(y));
   const first = STYLE[ranked[0]],
@@ -361,7 +268,7 @@ export function buildClientReports(a) {
         : '財運偏向隨職責、經驗與可持續交付逐步改善。收入成長較需要清楚的位置與報酬安排；累積的穩定度比短期同時增加多個方向更重要。';
   const financeRows = periods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.stage, p.money]);
   const essence = [
-    card('性格總評', `你${first[0]}，同時也${second[0]}。`, [
+    card('一 真實性格與外在表現', `你${first[0]}，同時也${second[0]}。`, [
       financial
         ? '你有自己的判斷，也能注意到外部機會。真正的拉扯在於：希望事情往前發展，卻又不太放心讓別人接手。因此常會多做一點、多顧一點，最後把成果與責任一起留在自己身上。'
         : `平常較容易展現${first[0]}的一面；事情牽涉共同安排時，${second[1]}。你的表現會隨熟悉程度改變，並非所有場合都用同一種方式回應。`,
@@ -369,12 +276,12 @@ export function buildClientReports(a) {
         ? '遇到新要求時，容易先想辦法完成，之後才感到時間與精力不足。較適合責任範圍清楚、能取得必要支持的環境。'
         : '熟悉的事情通常能持續投入，但也容易因已有一套做法而不願交接。當分工清楚時，能力較能轉成長期成果。',
     ]),
-    card('內在壓力與反覆出現的困擾', first[1] + '。', [
+    card('二 不易表露的內在拉扯', first[1] + '。', [
       `你不一定會立即表達不滿，可能先把事情處理完；累積久了，才發現自己在意的其實是對方有沒有理解投入，以及責任是否合理。${second[1]}，因此同一件事可能讓你同時考慮效率與公平。`,
       '這種模式的代價是：外表看似仍能配合，心裡卻已逐步減少投入。若長期只靠自己維持局面，容易把能承擔的能力變成必須承擔的習慣。',
     ]),
     card(
-      '能力與適合的工作方式',
+      '三 核心優勢與能力組合',
       financial || output
         ? '較適合把專業做深，再整理成能交付、能延續的成果。'
         : weak
@@ -393,13 +300,13 @@ export function buildClientReports(a) {
     ),
   ];
   const finance = [
-    card('財運總評', financeSummary, [
+    card('一 財富發展潛力與收入來源', financeSummary, [
       financial
         ? '收入來源可隨專業與合作逐步打開，但不屬於只要多接事情就會自然留下財富的模式。當個人投入、共同責任與分配混在一起，容易出現忙得更多、留下的卻沒有增加。'
         : '整體累積更依賴可持續的收入方式，以及收入增加後能否保留餘裕。短期看起來忙碌或機會變多，未必代表財務狀態已改善。',
     ]),
     card(
-      '收入如何增加',
+      '收入進來的方式',
       financial || output
         ? '專業成果、可延續的服務與具體問題解決，是較有發展空間的收入來源。'
         : '責任與報酬能清楚對應的工作，是較容易累積的收入來源。',
@@ -412,7 +319,7 @@ export function buildClientReports(a) {
       ],
     ),
     card(
-      '留財能力與主要耗損',
+      '四 主要漏財模式與改善方向',
       peers || financial
         ? '較需留意合作分配、共同支出與長期補位造成的耗損。'
         : '較需留意新增機會帶來的交付成本與持續責任。',
@@ -422,85 +329,155 @@ export function buildClientReports(a) {
           : '支出較容易藏在反覆修改、維護、學習與照顧既有承諾之中。收入方式穩定後，這些持續成本會比一時的大筆花費更影響累積。',
       ],
     ),
-    card('各階段財運時間線', '早年的資源累積逐步轉為成年後的收入與成果。', [], {
+    card('二 財運轉折與大運時間線', '早年的資源累積逐步轉為成年後的收入與成果。', [], {
       table: { headers: ['期間', '年齡', '大運', '人生階段', '財務發展'], rows: financeRows },
     }),
   ];
-  const relations = [
+  finance.splice(
+    2,
+    0,
     card(
-      '感情總評',
-      financial || a.strength.concentrated
-        ? '感情偏向慢慢建立信任、重視一起生活的可靠感。你願意投入，但容易把照顧對方與替對方作決定混在一起。'
-        : weak
-          ? '感情上重視可靠的回應與支持。關係進展較受生活壓力影響，投入過多時可能先疲累，之後才退回自己的空間。'
-          : `感情較重視日常是否合拍。你${first[2]}，也${daily[2]}。`,
+      '三 有助與消耗財運的人際模式',
+      financial || peers
+        ? '會一起完成責任、願意談清分配的人能幫助累積；只把機會帶來、卻把後續留給你的人，較容易消耗收入。'
+        : '能讓專長接到適合需求的人有助累積；只增加要求、卻不提供明確回應的往來較容易耗損。',
       [
-        `在熟悉之後，你較容易透過實際參與表達關心。${daily[2]}，因此能否長期相處，往往取決於平日的回應、安排與彼此是否感到被尊重。`,
-        '感情發展較適合由相處累積而來。短時間的吸引可以帶來接近，但長期關係仍會回到生活節奏與互相配合的程度。',
+        financial
+          ? '有助益的互動，是對方把需求、費用與決定講清楚，讓你能把工作完成並取得相應報酬。消耗性的互動則常先以關係或急迫性請你處理，等你接手後，修改與後續才陸續增加。'
+          : '有助益的互動會讓你的方法被採用，或讓正式責任有適當支持。消耗性往來則容易讓你花很多時間解釋、研究與補足，卻難確認何時完成。',
+        '這些模式可能出現在同事、客戶、親友或共同承擔費用的人之間。真正影響財務的，是對方做了什麼、你接下了什麼，以及報酬和持續責任最後落在誰身上。',
       ],
     ),
+  );
+  essence.push(
     card(
-      '容易欣賞的對象與你的吸引力',
+      '四 壓力下的反應與恢復能力',
       financial
-        ? '較容易欣賞做事有能力、有生活方向，且願意一起面對現實的人。'
-        : '較容易被有清楚回應、願意理解彼此安排的人吸引。',
+        ? '遇到混亂時較能先把事情接住，真正需要調整的是何時停止獨力補位。'
+        : weak
+          ? '壓力來時較容易先加倍投入，恢復的關鍵在取得方法與實際分擔。'
+          : '壓力會促使你重新安排做法；目標清楚時能持續投入，規範反覆時則較容易內耗。',
       [
+        `受評價或競爭時，${first[1]}；責任超載後，${second[1]}。你可能用持續做事維持表面的穩定，卻把需要支持的部分延後說明。`,
         financial
-          ? '你對能一起處理事情、談得清楚、行動可靠的人較容易產生信任。自己的吸引力也較常在解決問題、維持安排與實際支持中被看見。這種關係通常不是只靠話題熱度，而是相處越多越能看出是否合拍。'
-          : `你${first[0]}的一面，較容易在共同活動與實際互動中被注意。對方是否願意回應你的投入，比單純符合某種外在條件更影響好感能否延續。`,
+          ? '恢復力較能來自減少沒有對應報酬的補位，把能交接的部分交出去，再把精力放回真正能完成、能延續的專業。'
+          : '恢復力較能來自重新確認一個可完成的範圍，讓進度重新可見，而非同時修補所有問題。',
       ],
     ),
-    card(
-      '相處中的主要矛盾',
-      financial || a.strength.concentrated
-        ? '想被理解與分擔，卻又不太放心交出安排，是較容易反覆出現的拉扯。'
-        : `${first[1]}，這也可能進入親密關係。`,
-      [
-        financial
-          ? '當你先把事情做好，對方可能以為目前的分工就是你願意的安排。你則可能期待對方主動看見辛苦，久了便形成一方覺得沒有問題、另一方逐漸累積不滿的落差。'
-          : '你在意的事情不一定都會立即說出來；若先靠自己消化，對方可能只看到沉默或疏離，而不知道真正的顧慮。',
-        financial
-          ? '較能長期相處的對象，是願意參與決定、也願意承擔自己部分的人。若對方持續依賴，而你持續接手，關係容易從親密逐漸變成責任。'
-          : '彼此都有表達與調整空間時，關係較能保持穩定；只靠一方持續配合，則容易耗損原有好感。',
-      ],
-    ),
-    card(
-      '合作關係',
-      peers
-        ? '合作可帶來機會，但權責與分配模糊時，也容易成為主要壓力來源。'
-        : '合作較適合建立在清楚的交付與持續責任上。',
-      [
-        financial
-          ? '你較能在實際做事中建立信任，但容易因為想把事情完成而多接下一段。長期合作能否延續，關鍵在各方是否承擔相應責任，而非最初是否談得投機。'
-          : '共同目標可以拉近關係，但對品質、時程與後續責任的理解若不同，磨合會逐步增加。互補應表現在彼此都能完成自己的部分。',
-      ],
-    ),
-  ];
+  );
+  const timelineIndex = finance.findIndex((c) => c.title.startsWith('二 '));
+  if (timelineIndex >= 0) finance.splice(2, 0, ...finance.splice(timelineIndex, 1));
+  const relations = relationshipCards(a, referenceYear);
   const periodCards = [
-    card('人生階段總覽', '依年齡與各階段的變化，整理生活中的主要發展。', [], {
+    card('一 壓力來源與大運轉折', '依年齡與各階段的變化，整理生活中的主要發展。', [], {
       table: {
         headers: ['期間', '年齡', '大運', '階段', '發展重點'],
         rows: periods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.stage, p.summary]),
       },
     }),
   ];
-  const elements = [
-    card('五行運用總評', `優先順序：${a.use.order.map((e) => ELEMENTS[e]).join(' > ')}。`, [
+  const decisionPeriods = a.chart.luck.flatMap((l) => {
+    const authority = ['正官', '七殺'].includes(god(a.facts.dm, l.stem));
+    const c = contextFor(a, periodImpact(a, l));
+    const supportingRoute = g.正財 + g.偏財 >= 0.8 || g.正印 + g.偏印 >= 0.8;
+    if (!authority || !supportingRoute || c.rootsBroken || c.patterns.primary.status !== '成立')
+      return [];
+    return clientLuck(a, l)
+      .filter((s) => s.age >= 18 && s.age < 60)
+      .map((s) => [
+        s.dateLabel,
+        s.ageLabel,
+        l.text,
+        god(a.facts.dm, l.stem) === '正官'
+          ? '正式職務、評核與責任較容易成為發展主題；若權限與待遇同步到位，較能由執行走向決定。'
+          : '難題與急迫任務較容易把你推到需要拍板的位置；能否取得分擔與決策權，會決定這是累積還是持續補救。',
+      ]);
+  });
+  periodCards.push(
+    card(
+      '二 主導權提升的階段與條件',
+      decisionPeriods.length
+        ? '較有機會取得位置的階段，通常同時要求你更明確地承擔與決定。'
+        : '目前未形成足以單獨指定權責提升年份的多項訊號，發展仍以已有工作逐步累積。',
+      [
+        financial
+          ? '對你而言，位置提升的關鍵是把能做的專業連到可決定的範圍。若只是被交付更多事情，卻不能決定交期、費用或人力，工作量增加仍可能落回原有耗損。'
+          : '位置提升需要可持續完成的工作與相應授權一起出現。名目上的升任若沒有支持，未必能讓既有長處更好發揮。',
+      ],
+      decisionPeriods.length
+        ? { table: { headers: ['期間', '年齡', '大運', '可能發展'], rows: decisionPeriods } }
+        : {},
+    ),
+  );
+  periodCards.push(
+    card(
+      '三 面對低潮的應對能力',
       financial
-        ? '本命較需要讓成果流動、讓權責清楚，而非繼續增加自己承擔的事情。水、木、金分別著重機會承接、責任收斂與專業成果；火土則保留必要程度，過度加強容易回到忙碌與負擔集中。'
-        : `較優先的方向是${a.use.core === null ? '維持已有的穩定安排' : ELEMENTS[a.use.core] + '所對應的改善方向'}；各項仍有適量範圍，不能把排在前面理解為越多越好。`,
-    ]),
-    ...a.use.order.map((e) => elementCard(a, a.use.elements[e])),
+        ? '你較能在混亂中先接住事情；要走出低潮，則需要停止把每一項補救都留在自己身上。'
+        : weak
+          ? '你能靠持續理解與嘗試累積經驗，但低潮時更需要把支持接回來，避免靠加倍投入填補所有缺口。'
+          : '你較能透過重新整理做法找回節奏，真正的恢復來自讓可完成的事情重新累積。',
+      [
+        financial
+          ? '當壓力升高時，你可能先把情緒放在一旁，專注完成眼前責任。這能維持短期運作，長期卻可能讓旁人看不到你的餘裕已經縮小。較有利的轉折，是能把後續工作移交，把沒有對應回報的承諾收斂，而非再證明自己可以多承擔。'
+          : '當事情變得不順時，最容易放大的，是原本就反覆出現的困擾。重新站穩一項可完成的工作、找到適用的方法並取得必要分擔，較能讓進展恢復。',
+      ],
+    ),
+  );
+  const yearView = clientAnnual(a, referenceYear);
+  periodCards.push(
+    card(
+      '四 當年發展與行動重點',
+      `${referenceYear} 年 ${yearView.pillar}，需放在所在大運的責任與機會背景中看待。`,
+      yearView.segments.flatMap((s) => [`${s.dateLabel}：${s.summary}`, s.money, s.relation]),
+    ),
+  );
+  const year = annualReport(a, referenceYear);
+  const yearUses = year.segments.map((p) => ({ p, use: currentElementReport(a, p) }));
+  const active =
+    yearUses.find((x) => x.p.start <= Date.now() && Date.now() < x.p.end) || yearUses[0];
+  const natalOrder = a.use.order.map((e) => ELEMENTS[e]).join(' > ');
+  const elements = [
+    card(
+      '一 當年大運流年與五行運用總評',
+      `${referenceYear} 年 ${year.pillar.text}；${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}。當期優先順序：${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。`,
+      [
+        `本命使用順序維持${natalOrder}。當期的調整重點是${active.use.summary}`,
+        ...yearUses.map(
+          (x) =>
+            `${date(a, x.p.start)} 至 ${date(a, x.p.end)}：${x.p.luck?.text || '起運前'}${x.p.luck ? '大運' : ''}，${x.use.order.map((e) => ELEMENTS[e]).join(' > ')}。${composePeriod(a, x.p, { age: ageAt(a, x.p.start), stage: stageOf(ageAt(a, x.p.start)) }).summary}`,
+        ),
+      ],
+    ),
+    ...active.use.order.map((e) => {
+      const base = elementCard(a, a.use.elements[e]),
+        growth = active.use.elements[e];
+      return {
+        ...base,
+        title: `${ELEMENTS[e]}｜${growth.status}`,
+        conclusion: `${referenceYear} 年的${growth.status}。${growth.current}`,
+        before: growth.current + ' ' + base.before,
+        after: growth.growth,
+        balanced: growth.balanced,
+        over: growth.excess,
+        practice: growth.practice + ' ' + growth.condition,
+        periodAdjustments: yearUses.map((x) => ({
+          label: `${date(a, x.p.start)} 至 ${date(a, x.p.end)}・${x.p.luck?.text || '起運前'}・${year.pillar.text}`,
+          text: x.use.elements[e].growth + ' ' + x.use.elements[e].condition,
+        })),
+      };
+    }),
   ];
   const names = ['本質', '財運', '緣分', '流年大運', '五行取用喜忌神'];
   const chapters = [
     '第一章 性格與人生主線',
     '第二章 財運與累積',
-    '第三章 感情與合作',
+    '第三章 姻緣、桃花與子女',
     '第四章 大運與流年',
     '第五章 五行與生活狀態',
   ];
   return {
+    referenceYear,
     pages: [essence, finance, relations, periodCards, elements].map((cards, i) => ({
       name: names[i],
       chapter: chapters[i],
@@ -508,4 +485,27 @@ export function buildClientReports(a) {
       cards,
     })),
   };
+}
+
+export function decadeAnnualRows(a, luck) {
+  const first = moment.tz(luck.start, a.chart.birth.zone).year();
+  const last = moment.tz(luck.end - 1, a.chart.birth.zone).year();
+  const rows = [];
+  for (
+    let y = Math.max(first, a.chart.solarYear);
+    y <= Math.min(last, a.chart.birth.year + 110);
+    y++
+  ) {
+    const report = annualReport(a, y);
+    for (const p of report.segments) {
+      const start = Math.max(p.start, luck.start),
+        end = Math.min(p.end, luck.end);
+      if (start >= end) continue;
+      for (const s of lifeSlices(a, start, end)) {
+        const v = describePeriod(a, p, s);
+        rows.push({ year: y, pillar: report.pillar.text, ...v, luck: p.luck?.text || '起運前' });
+      }
+    }
+  }
+  return rows;
 }

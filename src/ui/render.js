@@ -18,7 +18,7 @@ export function renderCard(c) {
     : '';
   const states =
     c.element !== undefined
-      ? `<dl class="element-steps"><dt>使用前</dt><dd>${esc(c.before)}</dd><dt>使用後</dt><dd>${esc(c.after)}</dd><dt>過少時</dt><dd>${esc(c.under)}</dd><dt>剛剛好時</dt><dd>${esc(c.balanced)}</dd><dt>過多時</dt><dd>${esc(c.over)}</dd><dt>生活中的運用</dt><dd>${esc(c.practice)}</dd></dl>`
+      ? `<dl class="element-steps"><dt>使用前</dt><dd>${esc(c.before)}</dd><dt>使用後</dt><dd>${esc(c.after)}</dd><dt>過少時</dt><dd>${esc(c.under)}</dd><dt>剛剛好時</dt><dd>${esc(c.balanced)}</dd><dt>過多時</dt><dd>${esc(c.over)}</dd><dt>生活中的運用</dt><dd>${esc(c.practice)}</dd>${(c.periodAdjustments || []).map((p) => `<dt>${esc(p.label)}</dt><dd>${esc(p.text)}</dd>`).join('')}</dl>`
       : '';
   return `<article class="report-card"><h3>${esc(c.title)}</h3><p class="conclusion">${esc(c.conclusion)}</p>${(c.paragraphs || []).map((p) => `<p class="narrative-paragraph">${esc(p)}</p>`).join('')}${states}${table}</article>`;
 }
