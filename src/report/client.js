@@ -457,7 +457,11 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       .map((s) => `${s.ageLabel}（${l.text}大運）`);
   });
   const overviews = [
-    card('本質總評', life.conclusion, [life.coreNeed, life.lifeRule]),
+    card(
+      '本質總評',
+      `${life.conclusion}整體人生以能否保有自己的選擇、關係與身心餘裕，作為是否走在適合道路上的判準。`,
+      [life.coreNeed, life.lifeRule],
+    ),
     card('整體財運總評', overallFinance(a).conclusion, [
       mechanisms.income === 'output-chain'
         ? '賺錢主線以可持續交付的專業為重，財富累積的關鍵在把報酬實際留下，而非只增加事情與工時。'
