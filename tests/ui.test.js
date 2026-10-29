@@ -62,6 +62,10 @@ it('產生五頁命主報告，不展示規則、分數與裁決過程', () => {
   expect(essence).toContain('快樂來源與恢復方式');
   expect(essence).toContain('一生適合的生活配置');
   expect(essence).not.toMatch(/工作|職務|交付|收入|報酬|升任/);
+  changeRoute('periods');
+  const overviewRows = document.querySelectorAll('#page-periods .report-card table tbody tr');
+  expect(document.querySelector('#page-periods').textContent).toContain('十年大運總覽');
+  expect(overviewRows.length).toBeGreaterThanOrEqual(10);
 });
 it('流年選單與大運按鈕能更新報告', () => {
   changeRoute('periods');

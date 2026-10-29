@@ -121,6 +121,9 @@ export function lifeProfile(a) {
     secondary,
     inner,
     conclusion: `你的人生本質是${p.nature}，內在同時${i.nature}。`,
+    overview: `整體而言，${p.gift}。這項能力適合用來增加生活的選擇與體驗，而不是讓你承擔更多責任；一生真正要建立的是能長久維持的日常、關係與自由度。`,
+    overviewPractice:
+      '外在成就、收入與責任都只是生活的一部分；當它們長期壓縮休息、喜歡的事與真實關係，就代表人生配置需要調整。',
     coreNeed: `真正重要的需求是${p.need}；在親近關係裡，還需要${i.need}。`,
     gift: `${p.gift}；${s.gift}。`,
     conflict: `關係有摩擦時，${p.strain}；若同時缺少理解或休息，${s.strain}。`,

@@ -5,6 +5,7 @@ import {
   buildClientReports,
   clientAnnual,
   clientLuck,
+  clientLuckCycle,
   lifeSlices,
   ageAt,
 } from '../src/report/client.js';
@@ -53,6 +54,19 @@ it('essence describes a whole life rather than using career performance as perso
   for (const phrase of ['核心需求', '快樂來源', '早年：', '成年：', '中年：', '晚年：'])
     expect(text).toContain(phrase);
   expect(text).not.toMatch(/工作|職務|交付|收入|報酬|升任/);
+  expect(p.overview.conclusion).not.toContain(p.cards[0].conclusion);
+  expect(p.overview.paragraphs).not.toContain(p.cards[0].paragraphs[0]);
+});
+it('period overview uses one row per actual luck cycle instead of age-stage fragments', () => {
+  const p = buildClientReports(a, 2026).pages[3];
+  const table = p.cards[0].table;
+  expect(p.cards[0].title).toBe('一 十年大運總覽');
+  expect(table.headers).toEqual(['期間', '年齡', '大運', '發展重點']);
+  expect(table.rows).toHaveLength(a.chart.luck.length);
+  expect(table.rows.map((r) => r[2])).toEqual(a.chart.luck.map((l) => l.text));
+  expect(table.rows[0][0]).toContain('2004-02-28');
+  expect(table.rows[0][0]).toContain('2014-02-28');
+  expect(clientLuckCycle(a, a.chart.luck[0]).ageLabel).toBe('9–19 歲');
 });
 it('2004–2014 is split at 12 and 18; under-18 conclusions do not contain adult financial or partner scenarios', () => {
   const slices = clientLuck(a, a.chart.luck[0]);

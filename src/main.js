@@ -2,6 +2,7 @@ import {
   buildClientReports,
   clientAnnual,
   clientLuck,
+  clientLuckCycle,
   decadeAnnualRows,
   currentReferenceYear,
 } from './report/client.js';
@@ -25,7 +26,7 @@ const opts = (values, chosen) =>
     )
     .join('');
 const numbers = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
-app.innerHTML = `<header><a class="brand" href="#home"><span class="seal">命</span><span>MBAS<small>八字命盤解讀專家系統</small></span></a><a class="method-link" href="#method">閱讀說明 ↗</a></header><main><section id="birth-section" class="intro"><div class="intro-copy"><div class="section-label">THE STRUCTURE BEHIND YOUR STORY</div><h1>了解自己，<br>看見人生的方向。</h1><p>從出生資料出發，了解自己的傾向與人生節奏。<br>從性格、財運到關係，整理讓你活得自在的生活方向。</p><div class="intro-foot"><span>子平節令排盤</span><span>完整人生解讀</span><span>瀏覽器端完成</span></div></div><form id="birth-form"><div class="form-title"><h2>建立你的命盤</h2><span>01 / 出生資料</span></div><div class="fields"><label>性別<select name="sex">${opts(['男', '女'], '男')}</select></label><label>西元出生年<select name="year">${opts(numbers(RANGE.min, RANGE.max).reverse(), 1990)}</select></label><label>月<select name="month">${opts(numbers(1, 12), 6)}</select></label><label>日<select name="day"></select></label><label>出生小時<select name="hour">${opts(numbers(0, 23), 12)}</select></label><label>分鐘<select name="minute">${opts(numbers(0, 59), 0)}</select></label></div><div class="fields places"><label>出生國家／地區<select name="country"></select></label><label>出生地點<select name="region"></select></label><input type="hidden" name="location"></div><p class="form-note">支援 ${RANGE.min}–${RANGE.max} 年・${LOCATIONS.length} 個支援出生地點。採所選出生地點當時法定時間，00:00 換日。<a href="#method">查看支援清單</a></p><button class="primary" type="submit">排盤並產生完整解讀 <span>→</span></button><p id="error" role="alert"></p></form></section><section id="result" hidden><div id="chart"></div><div class="report-tools"><span id="audit-status"></span><div><button id="print">列印完整報告 / PDF</button><span class="print-note">列印時請關閉瀏覽器的「頁首及頁尾」，即可移除網址與日期。</span><button id="export">下載報告</button><a href="#home">修改出生資料</a></div></div><nav class="tabs" aria-label="命盤報告頁籤" role="tablist">${['本質', '財運', '緣分', '流年大運', '五行取用喜忌神'].map((n, i) => `<a role="tab" id="tab-${tabs[i]}" aria-controls="page-${tabs[i]}" href="#${tabs[i]}">${n}</a>`).join('')}</nav><div id="report-content"></div></section><div id="methods" hidden></div></main><footer><b>MBAS</b> · 外在成就支持生活，人生不必只為工作。<span>v1.6.1</span></footer>`;
+app.innerHTML = `<header><a class="brand" href="#home"><span class="seal">命</span><span>MBAS<small>八字命盤解讀專家系統</small></span></a><a class="method-link" href="#method">閱讀說明 ↗</a></header><main><section id="birth-section" class="intro"><div class="intro-copy"><div class="section-label">THE STRUCTURE BEHIND YOUR STORY</div><h1>了解自己，<br>看見人生的方向。</h1><p>從出生資料出發，了解自己的傾向與人生節奏。<br>從性格、財運到關係，整理讓你活得自在的生活方向。</p><div class="intro-foot"><span>子平節令排盤</span><span>完整人生解讀</span><span>瀏覽器端完成</span></div></div><form id="birth-form"><div class="form-title"><h2>建立你的命盤</h2><span>01 / 出生資料</span></div><div class="fields"><label>性別<select name="sex">${opts(['男', '女'], '男')}</select></label><label>西元出生年<select name="year">${opts(numbers(RANGE.min, RANGE.max).reverse(), 1990)}</select></label><label>月<select name="month">${opts(numbers(1, 12), 6)}</select></label><label>日<select name="day"></select></label><label>出生小時<select name="hour">${opts(numbers(0, 23), 12)}</select></label><label>分鐘<select name="minute">${opts(numbers(0, 59), 0)}</select></label></div><div class="fields places"><label>出生國家／地區<select name="country"></select></label><label>出生地點<select name="region"></select></label><input type="hidden" name="location"></div><p class="form-note">支援 ${RANGE.min}–${RANGE.max} 年・${LOCATIONS.length} 個支援出生地點。採所選出生地點當時法定時間，00:00 換日。<a href="#method">查看支援清單</a></p><button class="primary" type="submit">排盤並產生完整解讀 <span>→</span></button><p id="error" role="alert"></p></form></section><section id="result" hidden><div id="chart"></div><div class="report-tools"><span id="audit-status"></span><div><button id="print">列印完整報告 / PDF</button><span class="print-note">列印時請關閉瀏覽器的「頁首及頁尾」，即可移除網址與日期。</span><button id="export">下載報告</button><a href="#home">修改出生資料</a></div></div><nav class="tabs" aria-label="命盤報告頁籤" role="tablist">${['本質', '財運', '緣分', '流年大運', '五行取用喜忌神'].map((n, i) => `<a role="tab" id="tab-${tabs[i]}" aria-controls="page-${tabs[i]}" href="#${tabs[i]}">${n}</a>`).join('')}</nav><div id="report-content"></div></section><div id="methods" hidden></div></main><footer><b>MBAS</b> · 外在成就支持生活，人生不必只為工作。<span>v1.7.0</span></footer>`;
 const form = document.querySelector('#birth-form'),
   field = (n) => form.elements.namedItem(n);
 function days() {
@@ -98,7 +99,7 @@ function yearPicker() {
   return `<article class="report-card year-picker"><label for="annual-year">選擇流年</label><select id="annual-year">${opts(numbers(analysis.chart.solarYear, analysis.chart.birth.year + 110), selectedYear)}</select><p>${selectedYear} 年 ${annual.pillar}</p></article>`;
 }
 function annualHtml(financeOnly = false) {
-  const r = clientAnnual(analysis, selectedYear);
+  const r = clientAnnual(analysis, selectedYear, { splitByLifeStage: financeOnly });
   return r.segments
     .map((s) =>
       renderCard({
@@ -111,10 +112,12 @@ function annualHtml(financeOnly = false) {
 }
 function decadeGrid(financeOnly = false) {
   const l = analysis.chart.luck[selectedLuck];
-  const rows = decadeAnnualRows(analysis, l);
+  const rows = decadeAnnualRows(analysis, l, { splitByLifeStage: financeOnly });
   return renderCard({
     title: `${l.text}大運逐年${financeOnly ? '財運' : '發展'}`,
-    conclusion: '按實際交運與人生階段分段閱讀。',
+    conclusion: financeOnly
+      ? '財務情境保留實足年齡差異。'
+      : '每年只在實際換運時分段，不因人生階段重複切割。',
     table: {
       headers: ['年份', '流年', '年齡', '期間', financeOnly ? '財務發展' : '生活重點'],
       rows: rows.map((r) => [
@@ -128,8 +131,8 @@ function decadeGrid(financeOnly = false) {
   });
 }
 function periodHtml() {
-  const selected = clientLuck(analysis, analysis.chart.luck[selectedLuck]);
-  return `${luckTimeline(analysis, selectedLuck)}${selected.map((s) => renderCard({ title: `${s.luck}大運・${s.ageLabel}・${s.stage}`, conclusion: s.summary, paragraphs: [s.dateLabel, `生活重點：${s.domains.join('、')}`, s.money, s.relation] })).join('')}${decadeGrid()}${yearPicker()}${annualHtml()}`;
+  const s = clientLuckCycle(analysis, analysis.chart.luck[selectedLuck]);
+  return `${luckTimeline(analysis, selectedLuck)}${s ? renderCard({ title: `${s.luck}大運・${s.ageLabel}`, conclusion: s.summary, paragraphs: [s.dateLabel, `生活重點：${s.domains.join('、')}`, s.money, s.relation] }) : ''}${decadeGrid()}${yearPicker()}${annualHtml()}`;
 }
 function renderReport(index) {
   const p = reports.pages[index];

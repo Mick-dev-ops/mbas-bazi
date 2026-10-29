@@ -3,6 +3,7 @@ import { calculate } from '../src/calendar/chart.js';
 import { analyze } from '../src/engine/analyze.js';
 import {
   clientLuck,
+  clientLuckCycle,
   clientAnnual,
   buildClientReports,
   decadeAnnualRows,
@@ -21,7 +22,7 @@ const a = analyze(
   calculate({ year: 1994, month: 8, day: 10, hour: 13, minute: 20, sex: '男', location: 'tw-11' }),
 );
 it('decade/annual text varies by mechanisms while allowing unchanged effects to retain the same advice', () => {
-  const decades = a.chart.luck.map((l) => clientLuck(a, l)[0]);
+  const decades = a.chart.luck.map((l) => clientLuckCycle(a, l));
   expect(new Set(decades.map((s) => s.money)).size).toBe(10);
   expect(new Set(decades.map((s) => s.summary.replace(/這段大運.*?。/, ''))).size).toBeGreaterThan(
     7,
@@ -96,7 +97,7 @@ it('period priority comes from an explicit disease/rescue or natal use; natal co
   ).toBe(true);
 });
 it('decade development opens with concrete effects instead of a repeated topic preamble', () => {
-  const reports = a.chart.luck.map((l) => clientLuck(a, l)[0]);
+  const reports = a.chart.luck.map((l) => clientLuckCycle(a, l));
   expect(reports.every((p) => !p.summary.startsWith('這段大運以'))).toBe(true);
   expect(reports.every((p) => !p.summary.includes('為外在主題'))).toBe(true);
   expect(new Set(reports.map((p) => p.summary.split('。')[0])).size).toBeGreaterThan(6);

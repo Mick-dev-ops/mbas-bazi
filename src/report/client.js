@@ -71,13 +71,51 @@ export function clientLuck(a, luck) {
     luck: luck.text,
   }));
 }
-export function clientAnnual(a, year) {
+export function clientLuckCycle(a, luck) {
+  const start = Math.max(a.chart.birth.ms, luck.start);
+  if (start >= luck.end) return null;
+  const startAge = ageAt(a, start);
+  const endAge = ageAt(a, luck.end - 1);
+  const middle = start + Math.floor((luck.end - start) / 2);
+  const narrativeAge = ageAt(a, middle);
+  const described = describePeriod(a, periodImpact(a, luck), {
+    start,
+    end: luck.end,
+    age: narrativeAge,
+    ageEnd: narrativeAge,
+    stage: '十年大運',
+  });
+  return {
+    ...described,
+    title: `${luck.text}大運・${startAge}–${endAge}歲`,
+    stage: '十年大運',
+    age: startAge,
+    ageEnd: endAge,
+    start,
+    end: luck.end,
+    dateLabel: `${date(a, start)} 至 ${date(a, luck.end)}`,
+    ageLabel: startAge === endAge ? `${startAge} 歲` : `${startAge}–${endAge} 歲`,
+    luck: luck.text,
+  };
+}
+export function clientAnnual(a, year, { splitByLifeStage = true } = {}) {
   const r = annualReport(a, year);
   return {
     year,
     pillar: r.pillar.text,
     segments: r.segments.flatMap((p) =>
-      lifeSlices(a, p.start, p.end).map((s) => ({
+      (splitByLifeStage
+        ? lifeSlices(a, p.start, p.end)
+        : [
+            {
+              start: p.start,
+              end: p.end,
+              age: ageAt(a, p.start),
+              ageEnd: ageAt(a, p.end - 1),
+              stage: stageOf(ageAt(a, p.start)),
+            },
+          ]
+      ).map((s) => ({
         ...describePeriod(a, p, s),
         luck: p.luck?.text || '起運前',
       })),
@@ -225,8 +263,15 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const first = STYLE[ranked[0]];
   const financial = a.diagnosis.primary.id === 'wealth-channel';
   const weak = a.strength.state === '承格不足';
-  const periods = a.chart.luck.flatMap((l) => clientLuck(a, l));
-  const financeRows = periods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.stage, p.money]);
+  const financePeriods = a.chart.luck.flatMap((l) => clientLuck(a, l));
+  const luckPeriods = a.chart.luck.map((l) => clientLuckCycle(a, l)).filter(Boolean);
+  const financeRows = financePeriods.map((p) => [
+    p.dateLabel,
+    p.ageLabel,
+    p.luck,
+    p.stage,
+    p.money,
+  ]);
   const mechanisms = financialMechanisms(a.facts, a.strength);
   const moneyResult = financeConclusions(mechanisms);
   const basis = structureBasis(a);
@@ -243,7 +288,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       ? '先把生活安頓到能恢復的程度，再回應外界期待；不必以硬撐證明能力。'
       : '先照顧自己的節奏、感受與重要關係，再安排外在目標。');
   const essence = [
-    card('一 人生本質與核心需求', life.conclusion, [life.coreNeed, life.lifeRule], {
+    card('一 人生本質與核心需求', life.conclusion, [life.coreNeed], {
       basis: basis.join(' '),
     }),
     card(
@@ -299,13 +344,13 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const relations = relationshipCards(a, referenceYear);
   const periodCards = [
     card(
-      '一 人生階段與大運轉折',
-      '依年齡與各階段的變化，整理生活重心、關係與內在狀態的轉換。',
+      '一 十年大運總覽',
+      '每一步大運作為一個完整的十年背景；只有實際換運時才另起一段，不因年齡階段重複切割。',
       [],
       {
         table: {
-          headers: ['期間', '年齡', '大運', '階段', '發展重點'],
-          rows: periods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.stage, p.summary]),
+          headers: ['期間', '年齡', '大運', '發展重點'],
+          rows: luckPeriods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.summary]),
         },
       },
     ),
@@ -316,9 +361,10 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
     const supportingRoute = g.正財 + g.偏財 >= 0.8 || g.正印 + g.偏印 >= 0.8;
     if (!authority || !supportingRoute || c.rootsBroken || c.patterns.primary.status !== '成立')
       return [];
-    return clientLuck(a, l)
-      .filter((s) => s.age >= 18)
-      .map((s) => [
+    const s = clientLuckCycle(a, l);
+    if (!s || s.ageEnd < 18) return [];
+    return [
+      [
         s.dateLabel,
         s.ageLabel,
         l.text,
@@ -329,7 +375,8 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
           : god(a.facts.dm, l.stem) === '正官'
             ? '承諾、家庭分工或外界期待較容易成為生活主題；清楚選擇願意承擔的部分，能讓穩定與自由並存。'
             : '挑戰與變動較容易把你推到需要作決定的位置；能否取得分擔並保留休息，會決定這段時間是成長還是消耗。',
-      ]);
+      ],
+    ];
   });
   periodCards.push(
     card(
@@ -362,7 +409,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       ],
     ),
   );
-  const yearView = clientAnnual(a, referenceYear);
+  const yearView = clientAnnual(a, referenceYear, { splitByLifeStage: false });
   periodCards.push(
     card(
       '四 當年發展與行動重點',
@@ -457,11 +504,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       .map((s) => `${s.ageLabel}（${l.text}大運）`);
   });
   const overviews = [
-    card(
-      '本質總評',
-      `${life.conclusion}整體人生以能否保有自己的選擇、關係與身心餘裕，作為是否走在適合道路上的判準。`,
-      [life.coreNeed, life.lifeRule],
-    ),
+    card('本質總評', life.overview, [life.lifeRule, life.overviewPractice]),
     card('整體財運總評', overallFinance(a).conclusion, [
       mechanisms.income === 'output-chain'
         ? '賺錢主線以可持續交付的專業為重，財富累積的關鍵在把報酬實際留下，而非只增加事情與工時。'
@@ -523,7 +566,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   };
 }
 
-export function decadeAnnualRows(a, luck) {
+export function decadeAnnualRows(a, luck, { splitByLifeStage = false } = {}) {
   const first = moment.tz(luck.start, a.chart.birth.zone).year();
   const last = moment.tz(luck.end - 1, a.chart.birth.zone).year();
   const rows = [];
@@ -537,7 +580,18 @@ export function decadeAnnualRows(a, luck) {
       const start = Math.max(p.start, luck.start),
         end = Math.min(p.end, luck.end);
       if (start >= end) continue;
-      for (const s of lifeSlices(a, start, end)) {
+      const slices = splitByLifeStage
+        ? lifeSlices(a, start, end)
+        : [
+            {
+              start,
+              end,
+              age: ageAt(a, start),
+              ageEnd: ageAt(a, end - 1),
+              stage: stageOf(ageAt(a, start)),
+            },
+          ];
+      for (const s of slices) {
         const v = describePeriod(a, p, s);
         rows.push({ year: y, pillar: report.pillar.text, ...v, luck: p.luck?.text || '起運前' });
       }
