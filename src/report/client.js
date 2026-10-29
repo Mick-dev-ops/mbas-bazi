@@ -1,3 +1,4 @@
+import { FINANCIAL_STAGES, financialStage, overallFinance } from './finance-story.js';
 import { structureBasis, financeBasis } from './basis.js';
 import { financialMechanisms, financeConclusions } from '../engine/finance.js';
 import { functionalPractice } from './templates.js';
@@ -20,22 +21,13 @@ export const ageAt = (a, ms) =>
       .diff(moment.tz(a.chart.birth.ms, a.chart.birth.zone), 'years'),
   );
 const stageOf = (age) =>
-  age < 12
-    ? '學齡期'
-    : age < 18
-      ? '青春期'
-      : age < 25
-        ? '成年初期'
-        : age < 60
-          ? '成年期'
-          : age < 75
-            ? '熟齡期'
-            : '晚年';
+  age < 12 ? '學齡期' : age < 18 ? '青春期' : age < 25 ? '成年初期' : financialStage(age).name;
 export function lifeSlices(a, start, end) {
   const birth = moment.tz(a.chart.birth.ms, a.chart.birth.zone);
   const cuts = [
     Math.max(start, a.chart.birth.ms),
-    ...[12, 18, 25, 60, 75]
+    ...FINANCIAL_STAGES.slice(1)
+      .map((s) => s.from)
       .map((y) => birth.clone().add(y, 'years').valueOf())
       .filter((ms) => start < ms && ms < end),
     end,
@@ -60,6 +52,7 @@ export function describePeriod(a, p, slice) {
     domains: slice.age < 18 ? ['學習與升學', '家庭支持', '同儕相處'] : story.domains,
     summary: story.summary,
     money: story.money,
+    financialStage: story.financialStage || stageOf(slice.age),
     relation: story.relation,
     scenarios: story.scenarios,
     age: slice.age,
@@ -251,7 +244,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const essence = [
     card(
       '一 命局結構與人生主線',
-      structureOutcome,
+      `主結構為${a.patterns.primary.name}，${weak ? '承接仍需支持' : financial ? '能投入做事，但財路的接續需要保護' : '長處需配合現有承接持續發揮'}。`,
       [
         a.worldRule + '。',
         financial
@@ -288,31 +281,28 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
     ),
   ];
   const finance = [
-    card('一 財富發展潛力', moneyResult.income + moneyResult.retention, [moneyResult.expense], {
-      basis: financeBasis(a, mechanisms),
-    }),
-    card('二 收入如何產生', moneyResult.income, [
+    card('一 收入如何產生', moneyResult.income, [
       mechanisms.outputSuppressed.length
         ? '本局同時有印制食傷，需先保留交付出口；研究與準備尚未轉成成果前，不把投入當作收入。'
         : mechanisms.outputWealth.length
           ? '產出與財的接續已有條件，仍需透過需求、交付與實際收款完成；不保證每次投入都能換回報酬。'
           : '本局未形成完整的產出到付費接續，宜先確認實際報酬來源，避免同時開出過多尚未成熟的方向。',
     ]),
-    card('三 收入如何成為可自由運用的財', moneyResult.retention, [
+    card('二 收入如何成為可自由運用的財', moneyResult.retention, [
       mechanisms.peerDistribution.length
         ? '分配問題的觸發在非日主的比劫透干直接制財，須分清報酬歸屬與共同資源；不直接認定現實中存在特定合夥人。'
         : mechanisms.wealthControlled.length
           ? '直接制財仍需辨別資金用途與承接方式，不將所有財星受制都改寫成分潤或替人花錢。'
           : '目前沒有直接分財條件，應從收款與完成成本核對餘額，不先假定合作耗損。',
     ]),
-    card('四 支出與財務責任', moneyResult.expense, [
+    card('三 支出與財務責任', moneyResult.expense, [
       mechanisms.wealthAuthority.length
         ? '財官或財殺有位置接續，收入與履約標準可能一起成長；新增固定成本前，先確認報酬能否持續承接。'
         : mechanisms.outputSuppressed.length
           ? '支出來自準備壓縮產出，改善方向是讓方法回到實際應用，減少尚無用途的重複投入。'
           : '未符合財生官殺的責任支出條件，不延伸為家庭支出或共同負擔；依實際成本與承接能力安排。',
     ]),
-    card('五 財運轉折與大運時間線', '大運說明持續背景，年度細節呈現新增或轉向的作用。', [], {
+    card('四 財運轉折與大運時間線', '大運說明持續背景，年度細節呈現新增或轉向的作用。', [], {
       table: { headers: ['期間', '年齡', '大運', '人生階段', '財務發展'], rows: financeRows },
     }),
   ];
@@ -463,12 +453,92 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
     '第四章 大運與流年',
     '第五章 五行與生活狀態',
   ];
+  const currentCtx = contextFor(a, active.p);
+  const currentMoney = overallFinance({
+    ...a,
+    facts: currentCtx.facts,
+    strength: currentCtx.capacity,
+  });
+  const favorableAdults = a.chart.luck.flatMap((l) => {
+    const ctx = contextFor(a, { luck: l });
+    const m = financialMechanisms(ctx.facts, ctx.capacity);
+    return clientLuck(a, l)
+      .filter(
+        (s) =>
+          s.age >= 25 &&
+          s.age < 70 &&
+          ctx.capacity.state !== '承格不足' &&
+          m.income === 'output-chain' &&
+          !m.outputSuppressed.length,
+      )
+      .map((s) => `${s.ageLabel}（${l.text}大運）`);
+  });
+  const overviews = [
+    card('本質總評', structureOutcome, [
+      a.worldRule +
+        '。' +
+        (weak
+          ? '整體發展先求能穩定承接，再增加責任；支持是否到位比一時增加機會更重要。'
+          : financial
+            ? '優勢在能持續投入與形成成果；較大的限制是投入到回報之間容易受占用牽制，需保留對外發揮及調度空間。'
+            : '整體發展取決於能否持續保留原有長處與承接，不宜讓新增要求壓過既有節奏。'),
+    ]),
+    card('整體財運總評', overallFinance(a).conclusion, [
+      mechanisms.income === 'output-chain'
+        ? '賺錢主線以可持續交付的專業為重，財富累積的關鍵在把報酬實際留下，而非只增加事情與工時。'
+        : moneyResult.income,
+      favorableAdults.length
+        ? `已列大運中，較有專業接到需求條件的階段包括${favorableAdults.slice(0, 3).join('、')}；仍須同時核對各段的資金占用與支出。`
+        : '已列大運尚未出現足以單獨指定收入明顯開展階段的完整接續；各階段先按實際承接與收支變化判斷。',
+    ]),
+    card(
+      '緣分總評',
+      a.action.effects.some((x) => /沖|刑|害/.test(x.type) && x.positions.includes(2))
+        ? '感情的長期課題較在共同生活的變動與磨合，承諾能否持續落實，比一時熱度更影響穩定。'
+        : a.strength.concentrated
+          ? '長期關係需要親近與自主兼顧，既要互相回應，也要保留各自決定與參與的空間。'
+          : '關係較重視可靠的回應與支持，能持續理解彼此步調，較有條件讓好感轉為穩定陪伴。',
+      [
+        relations[1].conclusion,
+        `親子互動方面，${relations[4].conclusion}合作方面，${relations[5].conclusion}`,
+      ],
+    ),
+    card(
+      '大運流年總評',
+      a.worldRule +
+        '。目前' +
+        (currentCtx.rootsBroken
+          ? '原有承接受到變動，這一階段先重建可持續的安排。'
+          : currentCtx.capacity.state === '承格不足'
+            ? '新增要求容易超過現有承接，先取得支持再擴大投入。'
+            : currentCtx.diagnosis.primary.id === a.diagnosis.primary.id
+              ? '主要限制延續原局，發展重點在改善既有瓶頸，而非僅因換年就全面轉向。'
+              : '主導限制已有轉向，原本有效的方法需要配合當期條件調整。'),
+      [
+        `${referenceYear} 年處於${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}，財務方面：${currentMoney.conclusion}`,
+        `當期先保留${currentCtx.priority === null ? '現有承接' : ELEMENTS[currentCtx.priority] + '的救應功能'}。十年背景與年度變化分開看，年度細節只列新增、加強或轉向的作用。`,
+      ],
+    ),
+    card(
+      '五行取用總評',
+      `原局以${a.use.core === null ? '維持現有結構承接' : ELEMENTS[a.use.core] + '處理核心限制'}為主；整體順序：${natalOrder}。`,
+      [
+        `實際操作順序：${a.use.operationOrder.map((e) => ELEMENTS[e]).join(' > ')}。${a.use.operationReason}`,
+        `${referenceYear} 年${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}，當期順序：${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。原局需要與當期需求分開判斷。`,
+      ],
+    ),
+  ];
   return {
     referenceYear,
     pages: [essence, finance, relations, periodCards, elements].map((cards, i) => ({
       name: names[i],
       chapter: chapters[i],
       introduction: '',
+      overview: {
+        ...overviews[i],
+        ...(i === 1 ? { basis: financeBasis(a, mechanisms) } : {}),
+        scope: 'overview',
+      },
       cards,
     })),
   };

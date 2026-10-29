@@ -29,7 +29,8 @@ it('public reports and overview contain conclusions only; internal evidence is r
 });
 it('finance begins with a direct summary and includes dated age-aware luck and annual conclusions', () => {
   const p = buildClientReports(a).pages[1];
-  expect(p.cards[0].title).toBe('一 財富發展潛力');
+  expect(p.overview.title).toBe('整體財運總評');
+  expect(p.cards[0].title).toBe('一 收入如何產生');
   expect(p.cards[0].conclusion).toContain('收入');
   for (const label of ['收入如何產生', '收入如何成為可自由運用的財', '支出與財務責任'])
     expect(p.cards.some((c) => c.title.includes(label))).toBe(true);

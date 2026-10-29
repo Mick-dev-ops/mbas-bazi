@@ -1,14 +1,11 @@
+import { financialPeriodStory } from '../src/report/finance-story.js';
 import { it, expect } from 'vitest';
 import { calculate, luckAgeFromGap } from '../src/calendar/chart.js';
 import { analyze } from '../src/engine/analyze.js';
 import { periodImpact, annualReport } from '../src/engine/periods.js';
 import { cycle, STEM_ELEMENT as E, HIDDEN, mod } from '../src/data/constants.js';
 import { periodContext, elementGrowth } from '../src/engine/period-context.js';
-import {
-  financialMechanisms,
-  financeConclusions,
-  annualFinanceDelta,
-} from '../src/engine/finance.js';
+import { financialMechanisms, financeConclusions } from '../src/engine/finance.js';
 import { judgePatterns } from '../src/engine/patterns.js';
 import { periodThemes, effectKey, composePeriod } from '../src/report/period-story.js';
 import { buildClientReports } from '../src/report/client.js';
@@ -161,19 +158,16 @@ it('same element has different consequences across natal and luck conditions', (
   expect(x.mechanisms.disease).not.toBe(z.mechanisms.disease);
   expect(x.growth).not.toBe(z.growth);
 });
-it('annual finance emits only newly linked mechanisms or a change from the decade background', () => {
+it('annual finance retains only current triggers and preserves the age context', () => {
   const p = { luck: a.chart.luck[2], annual: cycle(42) };
   const bg = periodContext(a, { luck: p.luck }),
     ctx = periodContext(a, p);
-  const delta = annualFinanceDelta(bg, ctx);
-  expect(new Set(delta.map((x) => x.id)).size).toBe(delta.length);
-  expect(delta.length).toBeLessThanOrEqual(3);
-  const story = composePeriod(a, p, { age: 35 });
-  if (delta.length) expect(story.money).toBe(delta.map((x) => x.text).join(''));
-  const child = annualFinanceDelta(bg, ctx, 10)
-    .map((x) => x.text)
-    .join('');
-  expect(child).not.toMatch(/職務|收入|收款|履約|服務/);
+  const delta = financialPeriodStory(a, p, ctx, 35, bg);
+  expect(new Set(delta.topics.map((x) => x.id)).size).toBe(delta.topics.length);
+  expect(delta.topics.length).toBeLessThanOrEqual(3);
+  expect(composePeriod(a, p, { age: 35 }).money).toBe(delta.text);
+  const child = financialPeriodStory(a, p, ctx, 10, bg);
+  expect(child.text).not.toMatch(/職務|收入|收款|履約|服務/);
 });
 it('public short evidence changes with the actual chart and cooperation is its own triggered section', () => {
   const x = buildClientReports(a, 2026),

@@ -1,6 +1,6 @@
 {
   "name": "mbas-bazi",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "繁體中文 MBAS 八字命盤解讀專家系統",
   "scripts": {
     "dev": "vite --host 0.0.0.0",

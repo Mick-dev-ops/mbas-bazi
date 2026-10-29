@@ -867,3 +867,20 @@ th {
     background: white !important;
   }
 }
+
+.page-overview .report-card {
+  border-top: 3px solid var(--gold);
+  background: #f8faf3;
+}
+.page-overview .conclusion {
+  font-size: 18px;
+  line-height: 1.9;
+}
+@media print {
+  #print-report .page-overview {
+    break-inside: auto;
+  }
+  #print-report .page-overview .report-card {
+    background: white;
+  }
+}

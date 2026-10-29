@@ -1,9 +1,9 @@
+import { financialPeriodStory } from './finance-story.js';
 import { solarTerms } from '../calendar/solar.js';
 import { god, HIDDEN, STEM_ELEMENT as E, ELEMENTS, cycle } from '../data/constants.js';
 import { CHANNELS, PALACES } from '../data/period-scenes.js';
 import { periodContext, elementGrowth, clearContextCache } from '../engine/period-context.js';
 import { isBranchInteraction } from '../engine/interactions.js';
-import { financialMechanisms, financeConclusions, annualFinanceDelta } from '../engine/finance.js';
 export const contextFor = (a, p) => periodContext(a, p);
 export const clearPeriodCache = (a) => clearContextCache(a);
 const stageKey = (s) => (s.age < 18 ? 'school' : s.age >= 60 ? 'senior' : 'adult');
@@ -122,23 +122,6 @@ export function composePeriod(a, p, slice) {
     stem = god(a.facts.dm, main.stem),
     branch = god(a.facts.dm, HIDDEN[main.branch][0]);
   const events = periodThemes(a, p, slice);
-  const currentM = financialMechanisms(ctx.facts, ctx.capacity);
-  const financial = financeConclusions(currentM, slice.age < 18, slice.age >= 60);
-  let change = '';
-  let annualMoney = [];
-  if (p.annual) {
-    const bg = contextFor(a, { luck: p.luck }),
-      bm = financialMechanisms(bg.facts, bg.capacity);
-    annualMoney = annualFinanceDelta(bg, ctx, slice.age);
-    const changes = ['income', 'retention', 'expense'].filter((k) => currentM[k] !== bm[k]);
-    change = changes.length
-      ? '相較大運背景，本年' +
-        changes
-          .map((k) => ({ income: '收入接續', retention: '可用餘額', expense: '支出來源' })[k])
-          .join('、') +
-        '出現轉向。'
-      : '本年收入與支出機制延續大運背景，差異主要在新增干支作用，不另推定財務大幅轉向。';
-  }
   const channel = CHANNELS[stem][key];
   const summary = events.length
     ? events.map((x) => x.text).join('')
@@ -204,11 +187,14 @@ export function composePeriod(a, p, slice) {
     };
     adjacent = compare(prev, '前一年') + compare(next, '後一年');
   }
-  const money = p.annual
-    ? annualMoney.length
-      ? annualMoney.map((x) => x.text).join('')
-      : `${change}${events[0]?.text || channel}`
-    : `${channel}${financial.income}${financial.retention}${financial.expense}${events[0]?.text || ''}`;
+  const financialStory = financialPeriodStory(
+    a,
+    p,
+    ctx,
+    slice.age,
+    p.annual ? contextFor(a, { luck: p.luck }) : null,
+  );
+  const money = financialStory.text;
   const personal = events.find((x) => x.positions?.includes(2));
   const relation =
     slice.age < 18
@@ -231,6 +217,8 @@ export function composePeriod(a, p, slice) {
     scenarios: events.length ? events.map((x) => x.text) : [channel],
     annualThemeIds: p.annual ? events.map((x) => x.id) : [],
     backgroundOnly: !p.annual,
+    financeTopics: financialStory.topics.map((x) => x.id),
+    financialStage: financialStory.stage,
   };
 }
 export function currentElementReport(a, p) {

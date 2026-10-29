@@ -45,6 +45,11 @@ it('產生五頁命主報告，不展示規則、分數與裁決過程', () => {
   for (const hash of ['essence', 'finance', 'relations', 'periods', 'elements']) {
     changeRoute(hash);
     expect(document.querySelector(`#page-${hash}`)).toBeTruthy();
+    expect(document.querySelector(`#page-${hash} .page-overview`)).toBeTruthy();
+    const page = document.querySelector(`#page-${hash}`);
+    expect(page.querySelector('.report-card')).toBe(
+      page.querySelector('.page-overview .report-card'),
+    );
     expect(document.querySelector('.evidence')).toBeNull();
     expect(document.querySelector('#report-content').textContent).not.toMatch(
       /作用力|支持.?負荷比|規則編號|形成原因|成立條件|盤面事實|裁決依據/,
@@ -67,6 +72,7 @@ it('完整列印有五個主題，離開列印後恢復畫面', () => {
   window.print = vi.fn(() => {
     content = document.querySelector('#print-report').textContent;
     expect(document.querySelectorAll('#print-report .report-page')).toHaveLength(5);
+    expect(document.querySelectorAll('#print-report .page-overview')).toHaveLength(5);
     expect(document.querySelector('#print-report details')).toBeNull();
     expect(document.querySelector('#print-report .luck-track')).toBeNull();
     expect(document.querySelector('#print-report .year-picker')).toBeNull();
