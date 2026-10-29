@@ -36,6 +36,9 @@ it('finance begins with a direct summary and includes dated age-aware luck and a
   for (const label of ['收入如何產生', '收入如何成為可自由運用的財', '支出與財務責任'])
     expect(p.cards.some((c) => c.title.includes(label))).toBe(true);
   const table = p.cards.find((c) => c.table).table;
+  expect(table.headers).toEqual(['期間', '年齡', '大運', '財務發展']);
+  expect(table.rows).toHaveLength(a.chart.luck.length);
+  expect(table.rows.map((r) => r[2])).toEqual(a.chart.luck.map((l) => l.text));
   expect(table.rows.some((r) => r[0].includes('2024-02-28') && r[2] === '乙亥')).toBe(true);
   expect(table.rows.every((r) => r.every((x) => typeof x === 'string' && x.length))).toBe(true);
   expect(clientAnnual(a, 2026).segments.every((s) => s.money.length > 30)).toBe(true);
@@ -68,7 +71,7 @@ it('period overview uses one row per actual luck cycle instead of age-stage frag
   expect(table.rows[0][0]).toContain('2014-02-28');
   expect(clientLuckCycle(a, a.chart.luck[0]).ageLabel).toBe('9–19 歲');
 });
-it('2004–2014 is split at 12 and 18; under-18 conclusions do not contain adult financial or partner scenarios', () => {
+it('internal age translation remains available without splitting public luck timelines', () => {
   const slices = clientLuck(a, a.chart.luck[0]);
   expect(slices.map((s) => s.stage)).toEqual(['學齡期', '青春期', '成年初期']);
   for (const s of slices.filter((s) => s.age < 18)) {

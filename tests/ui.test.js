@@ -57,6 +57,18 @@ it('產生五頁命主報告，不展示規則、分數與裁決過程', () => {
     expect(document.querySelector('[aria-selected="true"]').getAttribute('href')).toBe('#' + hash);
   }
   expect(document.querySelectorAll('.report-card[data-element]')).toHaveLength(5);
+  changeRoute('finance');
+  const financeTable = [...document.querySelectorAll('#page-finance .report-card')].find(
+    (card) => card.querySelector('h3')?.textContent === '四 財運轉折與大運時間線',
+  );
+  expect(financeTable.querySelectorAll('thead th')).toHaveLength(4);
+  expect([...financeTable.querySelectorAll('thead th')].map((th) => th.textContent)).toEqual([
+    '期間',
+    '年齡',
+    '大運',
+    '財務發展',
+  ]);
+  expect(financeTable.querySelectorAll('tbody tr')).toHaveLength(10);
   changeRoute('essence');
   const essence = document.querySelector('#page-essence').textContent;
   expect(essence).toContain('快樂來源與恢復方式');

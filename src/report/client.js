@@ -263,15 +263,9 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const first = STYLE[ranked[0]];
   const financial = a.diagnosis.primary.id === 'wealth-channel';
   const weak = a.strength.state === '承格不足';
-  const financePeriods = a.chart.luck.flatMap((l) => clientLuck(a, l));
+  const financePeriods = a.chart.luck.map((l) => clientLuckCycle(a, l)).filter(Boolean);
   const luckPeriods = a.chart.luck.map((l) => clientLuckCycle(a, l)).filter(Boolean);
-  const financeRows = financePeriods.map((p) => [
-    p.dateLabel,
-    p.ageLabel,
-    p.luck,
-    p.stage,
-    p.money,
-  ]);
+  const financeRows = financePeriods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.money]);
   const mechanisms = financialMechanisms(a.facts, a.strength);
   const moneyResult = financeConclusions(mechanisms);
   const basis = structureBasis(a);
@@ -337,9 +331,14 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
           ? '支出來自準備壓縮產出，改善方向是讓方法回到實際應用，減少尚無用途的重複投入。'
           : '未符合財生官殺的責任支出條件，不延伸為家庭支出或共同負擔；依實際成本與承接能力安排。',
     ]),
-    card('四 財運轉折與大運時間線', '大運說明持續背景，年度細節呈現新增或轉向的作用。', [], {
-      table: { headers: ['期間', '年齡', '大運', '人生階段', '財務發展'], rows: financeRows },
-    }),
+    card(
+      '四 財運轉折與大運時間線',
+      '每一步大運作為一個完整的十年財務背景；只有實際換運時才另起一段，不再額外拆段。',
+      [],
+      {
+        table: { headers: ['期間', '年齡', '大運', '財務發展'], rows: financeRows },
+      },
+    ),
   ];
   const relations = relationshipCards(a, referenceYear);
   const periodCards = [
@@ -492,7 +491,8 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const favorableAdults = a.chart.luck.flatMap((l) => {
     const ctx = contextFor(a, { luck: l });
     const m = financialMechanisms(ctx.facts, ctx.capacity);
-    return clientLuck(a, l)
+    return [clientLuckCycle(a, l)]
+      .filter(Boolean)
       .filter(
         (s) =>
           s.age >= 25 &&
