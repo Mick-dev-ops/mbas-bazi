@@ -1,3 +1,5 @@
+import { financialMechanisms } from '../engine/finance.js';
+import { carrierLabel } from './basis.js';
 const card = (title, conclusion, paragraphs = [], extra = {}) => ({
   title,
   conclusion,
@@ -55,7 +57,7 @@ export function relationshipCards(a, referenceYear) {
   const childGods = a.chart.pillars[3].hidden.map((x) => x.god);
   const expression = childGods.some((x) => ['食神', '傷官'].includes(x));
   const strict = childGods.some((x) => ['正官', '七殺', '比肩', '劫財'].includes(x));
-  return [
+  const cards = [
     card(
       '一 伴侶特質與相遇方式',
       `${style[0]}。${independent ? '你願意承擔，但更適合能參與決定、也願意分擔的人。' : '對方能否尊重你的步調，比短時間的熱度更影響信任。'}`,
@@ -118,4 +120,48 @@ export function relationshipCards(a, referenceYear) {
       ],
     ),
   ];
+  const intimacyBasis =
+    `日支本氣為${dayGod}，${dayActs.length ? '日支另見' + [...new Set(dayActs.map((x) => x.type))].join('、') : '日支未觸發合沖刑害'}；` +
+    (items.length
+      ? '配偶星見於' + items.slice(0, 3).map(carrierLabel).join('、')
+      : '配偶星未達可用承接門檻，對相遇方式保留判斷') +
+    '。';
+  cards[0].basis = intimacyBasis;
+  cards[1].basis = intimacyBasis;
+  const m = financialMechanisms(a.facts, a.strength);
+  const authority = m.wealthAuthority.length || m.authoritySupported.length;
+  const competing = m.peerDistribution.length;
+  const output = m.outputWealth.length && !m.outputSuppressed.length;
+  cards.push(
+    card(
+      '六 合作中的分工、承諾與決策權',
+      competing
+        ? '合作較需要先釐清資源與決策歸屬，再開始共同投入；只憑默契容易留下分配落差。'
+        : authority
+          ? '合作較適合清楚的責任、授權與履約方式，長期配合要讓承諾與可決定範圍相稱。'
+          : output
+            ? '合作較適合以可交付成果串接分工，再逐步建立長期配合。'
+            : '本局尚無足夠條件指定單一合作模式，先以範圍明確、可檢查完成情況的配合建立信任。',
+      [
+        competing
+          ? '分工宜分清誰投入、誰決定與誰取得成果；意見不同時，不以持續加碼投入換取認同。'
+          : output
+            ? '分工以成果及驗收界線為核心，讓交付的人能決定做法，新增需求另行確認。'
+            : '分工先限定可完成的範圍，不因一時熱絡就預設能長期共同承擔。',
+        authority
+          ? '承諾需有相應授權與資源；若只有責任增加而無決策權，宜重新確認範圍及回應期限。'
+          : '長期配合先看約定是否持續被履行，決策權依實際投入與責任協商，不預設某方應主導。',
+      ],
+      {
+        basis: competing
+          ? '非日主的比劫透干直接制財，觸發資源與分配邊界規則。'
+          : authority
+            ? '財官或官印具有位置接續，觸發責任與授權協調規則。'
+            : output
+              ? '食傷與財有接續且未觸發印制食傷，觸發成果分工規則。'
+              : '未觸發明確分財、財官或食傷生財接續，不指定合作身分或現況。',
+      },
+    ),
+  );
+  return cards;
 }

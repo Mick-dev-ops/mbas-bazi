@@ -39,14 +39,12 @@ export function calculate(input) {
   const target = forward ? adjacent.next : adjacent.previous;
   const gapDays = Math.abs(target.ms - ms) / DAY_MS;
   // 1 太陽日 -> 4 個月；1 小時 -> 5 日。以 30 日月換算成整數起運秒，四捨五入。
-  const ageSeconds = Math.round((gapDays * 120 * DAY_MS) / 1000);
-  let rest = ageSeconds;
-  const ageYears = Math.floor(rest / (360 * 86400));
-  rest -= ageYears * 360 * 86400;
-  const ageMonths = Math.floor(rest / (30 * 86400));
-  rest -= ageMonths * 30 * 86400;
-  const ageDays = Math.floor(rest / 86400);
-  rest -= ageDays * 86400;
+  const {
+    years: ageYears,
+    months: ageMonths,
+    days: ageDays,
+    seconds: rest,
+  } = luckAgeFromGap(gapDays);
   const start = addCalendar(ms, zone, {
     years: ageYears,
     months: ageMonths,
@@ -78,4 +76,17 @@ export function calculate(input) {
       checks: ['有效曆日', '支援地點與年代', '法定時間唯一', '節令交接已比較', '00:00 換日'],
     },
   };
+}
+
+export function luckAgeFromGap(gapDays) {
+  const ageSeconds = Math.round(gapDays * 120 * 86400);
+  if (!Number.isFinite(gapDays) || gapDays < 0) throw Error('起運時間差無效');
+  let rest = ageSeconds;
+  const ageYears = Math.floor(rest / (360 * 86400));
+  rest -= ageYears * 360 * 86400;
+  const ageMonths = Math.floor(rest / (30 * 86400));
+  rest -= ageMonths * 30 * 86400;
+  const ageDays = Math.floor(rest / 86400);
+  rest -= ageDays * 86400;
+  return { years: ageYears, months: ageMonths, days: ageDays, seconds: rest };
 }

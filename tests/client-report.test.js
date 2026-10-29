@@ -19,7 +19,9 @@ it('public reports and overview contain conclusions only; internal evidence is r
   const html =
     r.pages.flatMap((p) => p.cards.map(renderCard)).join('') + chartOverview(a) + methodView();
   expect(html).not.toMatch(forbidden);
-  expect(html).not.toContain('<details');
+  expect(html).toContain('luck-calculation');
+  expect(html).toContain('命盤重點');
+  expect(html).not.toContain('class="evidence"');
   expect(JSON.stringify(r)).not.toMatch(/"traces"|"decisionPath"|"score"|"pipeline"/);
   expect(a.trace).toBeTruthy();
   expect(a.use.elements.every((x) => x.trace)).toBe(true);
@@ -27,8 +29,10 @@ it('public reports and overview contain conclusions only; internal evidence is r
 });
 it('finance begins with a direct summary and includes dated age-aware luck and annual conclusions', () => {
   const p = buildClientReports(a).pages[1];
-  expect(p.cards[0].title).toBe('一 財富發展潛力與收入來源');
-  expect(p.cards[0].conclusion).toContain('有賺錢能力');
+  expect(p.cards[0].title).toBe('一 財富發展潛力');
+  expect(p.cards[0].conclusion).toContain('收入');
+  for (const label of ['收入如何產生', '收入如何成為可自由運用的財', '支出與財務責任'])
+    expect(p.cards.some((c) => c.title.includes(label))).toBe(true);
   const table = p.cards.find((c) => c.table).table;
   expect(table.rows.some((r) => r[0].includes('2024-02-28') && r[2] === '乙亥')).toBe(true);
   expect(table.rows.every((r) => r.every((x) => typeof x === 'string' && x.length))).toBe(true);
@@ -63,7 +67,7 @@ it('relationships make direct character and interaction statements without teach
   const p = buildClientReports(a).pages[2];
   const t = JSON.stringify(p);
   expect(p.cards[0].title).toBe('一 伴侶特質與相遇方式');
-  expect(t).not.toMatch(/配偶星|日支|透干|十神|命盤可以|查看|你已婚|你的太太/);
+  expect(t).not.toMatch(/命盤可以|你已婚|你的太太/);
   expect(p.cards.some((c) => c.title.includes('戀愛模式'))).toBe(true);
 });
 it('each element includes distinct before/after and low/balanced/excess states; unfavorable elements are not prescribed', () => {
@@ -110,7 +114,8 @@ it('four-pillar overview restores gods, stem/branch elements, hidden stems and a
 });
 it('relationship chapter ends after child section and removes the sixth window section', () => {
   const p = buildClientReports(a, 2026).pages[2];
-  expect(p.cards).toHaveLength(5);
+  expect(p.cards).toHaveLength(6);
+  expect(p.cards[5].title).toContain('合作');
   expect(JSON.stringify(p)).not.toContain('近期姻緣、桃花與家庭窗口');
 });
 it('overall element order comes first and each element has independent overall and annual states', () => {
@@ -124,7 +129,9 @@ it('overall element order comes first and each element has independent overall a
     expect(c.annual.year).toBe(2025);
     const next = y.cards.find((v) => v.element === c.element);
     expect(c.overall).toEqual(next.overall);
-    expect(c.annual.after).not.toBe(next.annual.after);
+    expect(c.annual.conclusion).not.toBe(next.annual.conclusion);
+    // Identical calculated effects may legitimately retain the same advice.
+    expect(c.annual.after).toContain('再加強');
     const html = renderCard(c);
     expect(html.indexOf('整體運勢')).toBeLessThan(html.indexOf('今年運勢'));
   }

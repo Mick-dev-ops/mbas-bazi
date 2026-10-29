@@ -12,7 +12,7 @@ import {
 } from '../src/data/period-scenes.js';
 import { writeFileSync } from 'node:fs';
 const result = {
-  version: 'scenes-1.3.0',
+  version: 'delta-scenes-1.4.0',
   functionalPairs: 0,
   declaredStructureProfiles: 0,
   charts: 0,

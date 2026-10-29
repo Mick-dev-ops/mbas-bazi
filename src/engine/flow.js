@@ -12,10 +12,17 @@ export function flowAnalysis(f, patterns = null) {
         .sort((a, b) => b.force - a.force)[0]
     : null;
   const source = carrier?.element ?? values.indexOf(Math.max(...values));
+  const connected = (a, b) =>
+    Math.abs(a.position - b.position) <= 1 || a.position >= 4 || b.position >= 4;
+  const carriers = (e) => f.items.filter((x) => x.element === e && x.force >= 0.2);
   const path = [source];
   for (let n = 1; n < 5; n++) {
     const e = mod(source + n, 5);
-    if (values[e] < 0.8) break;
+    if (
+      values[e] < 0.8 ||
+      !carriers(path.at(-1)).some((a) => carriers(e).some((b) => connected(a, b)))
+    )
+      break;
     path.push(e);
   }
   const barriers = [];
@@ -25,8 +32,14 @@ export function flowAnalysis(f, patterns = null) {
         from: e,
         to: mod(e + 2, 5),
         bridge: mod(e + 1, 5),
-        available: values[mod(e + 1, 5)] >= 0.8,
-        condition: `${ELEMENTS[mod(e + 1, 5)]}須有作用力 ≥.8，且不先損傷相神`,
+        available:
+          values[mod(e + 1, 5)] >= 0.8 &&
+          carriers(mod(e + 1, 5)).some(
+            (b) =>
+              carriers(e).some((a) => connected(a, b)) &&
+              carriers(mod(e + 2, 5)).some((c) => connected(b, c)),
+          ),
+        condition: `${ELEMENTS[mod(e + 1, 5)]}須有作用力 ≥.8，且有位置接續、不先損傷相神`,
       });
   const noise = [];
   if (f.gods.傷官 >= 0.8 && f.gods.正官 >= 0.8)

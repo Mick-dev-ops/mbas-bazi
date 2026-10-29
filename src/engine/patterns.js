@@ -13,7 +13,7 @@ export function judgePatterns(f, c, chart) {
           (b) =>
             right.includes(b.god) &&
             b.force >= 0.2 &&
-            Math.abs(a.position - b.position) <= 1 &&
+            (Math.abs(a.position - b.position) <= 1 || a.position >= 4 || b.position >= 4) &&
             a.id !== b.id,
         ),
     );
@@ -73,6 +73,14 @@ export function judgePatterns(f, c, chart) {
       !link ? ['參與位置無相鄰承接'] : [],
       !extra ? [damage] : [],
     );
+    const defects = (f.interactions || []).filter(
+      (x) =>
+        x.type === '天干剋' &&
+        x.affectedPositions?.some((pos) =>
+          f.items.some((i) => i.position === pos && i.exposed && r.includes(i.god)),
+        ),
+    );
+    const status = passed ? (defects.length ? '成立有瑕' : '成立') : present ? '受損' : '待條件';
     const rescue = damaged.length
       ? f.items
           .filter((x) => ['正印', '食神'].includes(x.god) && x.force >= 0.8)
@@ -81,7 +89,8 @@ export function judgePatterns(f, c, chart) {
     return {
       id,
       name,
-      status: passed ? '成立' : present ? '受損' : '待條件',
+      status,
+      defects: defects.map((x) => x.detail),
       support,
       damage: damaged,
       rescue,
@@ -90,7 +99,7 @@ export function judgePatterns(f, c, chart) {
         id,
         passed,
         [...support, `相鄰承接=${link}`, `額外排除條件通過=${extra}`],
-        passed ? '成立' : damaged.join('；'),
+        passed ? status : damaged.join('；'),
       ),
     };
   });
@@ -98,7 +107,7 @@ export function judgePatterns(f, c, chart) {
     god: god(f.dm, s),
     stem: s,
     rank: i,
-    exposed: chart.pillars.some((p, k) => k !== 2 && p.stem === s),
+    exposed: chart.pillars.slice(0, 4).some((p, k) => k !== 2 && p.stem === s),
   }));
   const monthName = monthly.find((x) => x.exposed)?.god || monthly[0].god;
   const requiredAssist = {
@@ -134,12 +143,19 @@ export function judgePatterns(f, c, chart) {
     support: monthSupport,
     damage: monthDamage,
     rescue: monthRescue,
+    selectedStem: monthly.find((x) => x.exposed)?.stem ?? monthly[0].stem,
     status: monthDamage.length ? '受損／待配合' : '可發用',
   };
   // 月令優先：與月令主導十神無關的成立組合只列背景，不取代主結構。
   const established = candidates
-    .filter((x) => x.status === '成立')
-    .sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : 1));
+    .filter((x) => ['成立', '成立有瑕'].includes(x.status))
+    .sort((a, b) => {
+      const priority = (x) => {
+        const spec = specs.find((s) => s[0] === x.id);
+        return spec[2].includes(monthly[0].god) ? 0 : spec[2].includes(monthName) ? 1 : 2;
+      };
+      return priority(a) - priority(b) || a.id.localeCompare(b.id);
+    });
   const leading = established.find((x) => {
     const spec = specs.find((s) => s[0] === x.id);
     return [...spec[2], ...spec[3]].includes(monthName);
@@ -166,6 +182,7 @@ export function judgePatterns(f, c, chart) {
     monthJudgment,
     candidates,
     monthTrace,
+    mainGods: leading ? specs.find((x) => x[0] === primary.id)[2] : [monthName],
     assist: leading ? specs.find((x) => x[0] === primary.id)[3] : requiredAssist,
   };
 }

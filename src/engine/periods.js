@@ -1,3 +1,4 @@
+import { periodContext } from './period-context.js';
 import { cycle, STEM_ELEMENT as E, ELEMENTS, god, mod } from '../data/constants.js';
 import { solarTerms } from '../calendar/solar.js';
 import { HIDDEN } from '../data/constants.js';
@@ -53,21 +54,9 @@ export function periodImpact(a, luck, annual = null) {
   const natalActs = acts.filter((x) => x.positions.some((p) => p < 4));
   const spouseActs = natalActs.filter((x) => x.positions.includes(2) && isBranchInteraction(x));
   if (spouseActs.length) affected.push('日常相處與伴侶協調');
-  const natalCore = a.use.core,
-    load = stems.filter((x) =>
-      [mod(a.facts.de + 1, 5), mod(a.facts.de + 2, 5), mod(a.facts.de + 3, 5)].includes(x.element),
-    ).length;
-  const needsCapacity =
-    periodCapacity.state === '承格不足' || (a.strength.state === '承格不足' && load > 0);
-  const triggeredBarrier = a.flow.barriers.find(
-    (b) => !b.available && stems.some((x) => x.element === b.from || x.element === b.to),
-  );
-  const priority = needsCapacity ? mod(a.facts.de + 4, 5) : (triggeredBarrier?.bridge ?? natalCore);
-  const priorityReason = needsCapacity
-    ? '運年負荷需先由印星承接；此為期間優先條件，不改寫本命裁決'
-    : triggeredBarrier
-      ? '運年加強相剋兩端，本期先檢查中介通關'
-      : '本期未觸發承格或通關優先順序調整，沿用本命救應';
+  const ctx = periodContext(a, { luck, annual });
+  const priority = ctx.priority;
+  const priorityReason = `本期重新判定${ctx.patterns.primary.name}與${ctx.diagnosis.primary.name}，採同一裁決器排序；不以單一新增五行判吉凶`;
   const main = stems.at(-1),
     clash = natalActs.some((x) => x.type.includes('沖') || x.type.includes('刑'));
   const mode = clash
@@ -170,7 +159,7 @@ export function annualReport(a, year) {
     throw Error('流年超出出生所屬干支年起、至出生年後 110 年的範圍');
   const start = Math.max(a.chart.birth.ms, solarTerms(year)[2].ms),
     end = solarTerms(year + 1)[2].ms,
-    annual = cycle(year - 4);
+    annual = { ...cycle(year - 4), year };
   const cuts = [
     start,
     ...a.chart.luck.flatMap((x) => [x.start, x.end]).filter((ms) => ms > start && ms < end),

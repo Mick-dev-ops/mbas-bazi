@@ -1,3 +1,4 @@
+import { financialMechanisms } from './finance.js';
 import { ELEMENTS, mod } from '../data/constants.js';
 import { CLIMATE } from '../data/climate.js';
 import { trace } from '../data/rules.js';
@@ -48,13 +49,8 @@ export function diagnose(f, c, p, flow) {
   const wealthStructure =
     ['PAT-02', 'PAT-05'].includes(p.primary?.id) ||
     ['正財', '偏財'].includes(p.monthJudgment?.name);
-  const wealthDamage = (f.interactions || []).filter(
-    (x) =>
-      x.type === '天干剋' &&
-      x.affectedPositions?.some((pos) =>
-        f.items.some((i) => i.position === pos && i.exposed && ['正財', '偏財'].includes(i.god)),
-      ),
-  );
+  const mechanisms = financialMechanisms(f, c);
+  const wealthDamage = mechanisms.wealthControlled;
   const financialObstruction = c.concentrated && wealthStructure && wealthDamage.length > 0;
   if (financialObstruction) {
     add(
@@ -143,12 +139,25 @@ export function diagnose(f, c, p, flow) {
       'wealth',
       '財受比劫競奪',
       3,
-      [`比劫 ${(g.比肩 + g.劫財).toFixed(2)} > 財 ${(g.正財 + g.偏財).toFixed(2)}`],
+      [...wealthDamage.map((x) => x.detail)],
       mod(de + 1, 5),
       '食傷有承接通道，先產出再分配',
       '食傷增加也會洩身',
     );
-  if (g.偏印 >= 0.8 && g.食神 >= 0.8 && g.偏印 >= g.食神)
+  const linkedGods = (left, right) =>
+    f.items.some(
+      (a) =>
+        left.includes(a.god) &&
+        a.force >= 0.2 &&
+        f.items.some(
+          (b) =>
+            right.includes(b.god) &&
+            b.force >= 0.2 &&
+            a.id !== b.id &&
+            (Math.abs(a.position - b.position) <= 1 || a.position >= 4 || b.position >= 4),
+        ),
+    );
+  if (g.偏印 >= 0.8 && g.食神 >= 0.8 && g.偏印 >= g.食神 && linkedGods(['偏印'], ['食神']))
     add(
       'owl',
       '食神受梟印壓制',
@@ -158,7 +167,7 @@ export function diagnose(f, c, p, flow) {
       '財能制梟，但不破壞原局所需印星',
       '財同時耗身並可能破印',
     );
-  if (g.傷官 >= 0.8 && g.正官 >= 0.8)
+  if (g.傷官 >= 0.8 && g.正官 >= 0.8 && linkedGods(['傷官'], ['正官']))
     add(
       'officer',
       '官與傷官衝突',
@@ -239,7 +248,7 @@ export function adjudicate(f, c, p, flow, climate, diagnosis) {
     nominate(
       mod(de + 1, 5),
       2,
-      '相神',
+      '輔助喜神',
       '食傷承接身氣並生財，維持主結構',
       '須接到財，不可只增加食傷而壓制必要官星',
       'wealth-channel',
@@ -318,8 +327,15 @@ export function adjudicate(f, c, p, flow, climate, diagnosis) {
     if (x.veto.length) roles.push('主要忌神');
     else {
       if (e === core) roles.push('核心用神');
-      if (e === prerequisite) roles.push('先決用神');
-      if (x.intents.some((i) => i.role === '相神')) roles.push('相神');
+      if (!roles.length && e === prerequisite) roles.push('先決用神');
+      if (
+        !roles.length &&
+        x.intents.length > 0 &&
+        c.state === '承格不足' &&
+        [mod(de + 1, 5), mod(de + 2, 5), mod(de + 3, 5)].includes(e)
+      )
+        roles.push('條件性喜神');
+      if (!roles.length && x.intents.some((i) => i.role === '相神')) roles.push('相神');
       if (!roles.length)
         roles.push(
           x.intents.length
@@ -351,6 +367,14 @@ export function adjudicate(f, c, p, flow, climate, diagnosis) {
           ? 6 - Math.min(...x.intents.map((i) => i.stage))
           : 0,
       decisionPath,
+      structuralIdentity: (p.mainGods || []).some((g) =>
+        f.items.some((i) => i.god === g && i.element === e),
+      )
+        ? '格神'
+        : assistElements.includes(e)
+          ? '成格承接'
+          : '救應配合',
+      structuralFunctions: [...new Set(x.intents.map((i) => i.role))],
       conditions,
       risks,
       function: `${x.name}在本命對應${rolesByRelation[mod(e - de, 5)]}，先作用於${diagnosis.primary.name}涉及的結構環節。${x.veto.length ? x.veto.join('；') : reasons.join('；') || '無直接救應依據，不因缺少或數量低而取用'}。`,
@@ -375,12 +399,48 @@ export function adjudicate(f, c, p, flow, climate, diagnosis) {
       ? -1
       : candidates[e].veto.length
         ? 100
-        : Math.min(99, ...candidates[e].intents.map((i) => i.stage));
+        : c.state === '承格不足' && [mod(de + 1, 5), mod(de + 2, 5), mod(de + 3, 5)].includes(e)
+          ? 50
+          : Math.min(49, ...candidates[e].intents.map((i) => i.stage));
   const order = elements.map((x) => x.element).sort((a, b) => priority(a) - priority(b) || a - b);
+  const operationOrder = [...order];
+  const coreDamaged =
+    core !== null &&
+    f.items.some(
+      (x) =>
+        x.exposed &&
+        x.element === core &&
+        f.interactions.some(
+          (t) => t.type === '天干剋' && t.affectedPositions?.includes(x.position),
+        ),
+    );
+  const bridge = mod(de + 1, 5);
+  const bridgeRooted = f.items.some((x) => x.element === bridge && !x.exposed && x.force >= 0.2);
+  // A damaged wealth receiver needs an available output bridge before expansion.
+  const needsBridge = financial && coreDamaged && bridgeRooted && !veto.includes(bridge);
+  const firstOperation = prerequisite ?? (needsBridge ? bridge : core);
+  if (firstOperation !== null)
+    operationOrder.splice(
+      0,
+      operationOrder.length,
+      firstOperation,
+      ...order.filter((e) => e !== firstOperation),
+    );
   return {
     core,
+    operationOrder,
+    tiedOrders: order.flatMap((e, i) =>
+      i && priority(e) === priority(order[i - 1]) ? [[order[i - 1], e]] : [],
+    ),
+    operationReason:
+      prerequisite !== null
+        ? '先建立承格所需支持，再擴大其他功能。'
+        : needsBridge
+          ? `${ELEMENTS[core]}是核心救應，但現有承接受剋；實際調整先保住有根的${ELEMENTS[bridge]}產出接續，再擴大${ELEMENTS[core]}，並保留官殺制比劫的條件。`
+          : '未觸發額外先決條件，實際調整沿用結構救應順序。',
     prerequisite,
     assistElements,
+    patternAssistants: assistElements.filter((e) => !veto.includes(e)),
     elements,
     order,
     veto,

@@ -211,7 +211,14 @@ describe('承格、病藥、源流與喜忌', () => {
     expect(flow.barriers[0].available).toBe(false);
     expect(flow.truth[0].usable).toBe(false);
     f.elements[1] = 1;
+    expect(flowAnalysis(f).barriers.find((x) => x.from === 0).available).toBe(false);
+    f.items.push(
+      { id: 'bridge', element: 1, force: 1, position: 0 },
+      { id: 'receiver', element: 2, force: 1, position: 1 },
+    );
     expect(flowAnalysis(f).barriers.find((x) => x.from === 0).available).toBe(true);
+    f.items.find((x) => x.id === 'bridge').position = 3;
+    expect(flowAnalysis(f).barriers.find((x) => x.from === 0).available).toBe(false);
   });
   it('120格調候完整索引並檢查全局承接', () => {
     expect(Object.keys(CLIMATE)).toHaveLength(120);

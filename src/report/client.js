@@ -1,9 +1,11 @@
+import { structureBasis, financeBasis } from './basis.js';
+import { financialMechanisms, financeConclusions } from '../engine/finance.js';
 import { functionalPractice } from './templates.js';
 import { solarTerms } from '../calendar/solar.js';
 import { relationshipCards } from './relationship.js';
 import { composePeriod, currentElementReport, contextFor } from './period-story.js';
 import moment from 'moment-timezone/moment-timezone.js';
-import { ELEMENTS, STEM_ELEMENT, GODS, HIDDEN, god } from '../data/constants.js';
+import { ELEMENTS, STEM_ELEMENT, HIDDEN, god } from '../data/constants.js';
 import { periodImpact, annualReport } from '../engine/periods.js';
 import { formatTime } from '../calendar/time.js';
 
@@ -185,30 +187,10 @@ function elementCard(a, x) {
       '準備與照顧過多，行動反而變慢；也可能因支持增加而維持原本不必要的負擔。',
     ],
   ][relation];
-  if (a.diagnosis.primary.id === 'wealth-channel' && x.element === 1) {
-    states[0] =
-      '少一些額外照顧與反覆準備，通常較能減少負擔；但完全缺乏方法與基本支持時，遇到陌生問題仍可能較吃力。';
-    states[1] =
-      '支持與準備只到足以完成事情的程度，能力能向外發揮，不再為了照顧所有細節而停留原地。';
-  }
-  if (a.diagnosis.primary.id === 'wealth-channel' && x.element === 2) {
-    states[0] =
-      '減少額外堅持與承擔，較能讓責任流動；但若連基本分工與自主判斷也放掉，事情又容易失去落點。';
-    states[1] = '保有基本主見與執行力，同時容許別人分擔，不再把每個環節都收回自己處理。';
-  }
   const banned = x.roles.includes('主要忌神');
   const fav =
     x.roles.some((r) => ['核心用神', '先決用神', '相神', '輔助喜神'].includes(r)) && !banned;
-  const before =
-    a.diagnosis.primary.id === 'wealth-channel'
-      ? [
-          '自己投入很多，卻不容易把權責分開，付出與回報容易受到共同安排牽動。',
-          '忙於維持已有安排，對外成果與表達容易被擠到後面。',
-          '責任集中在自己身上，即使已經疲累，也不容易調整原有做法。',
-          '想法與經驗不少，但未必都整理成他人願意採用的成果。',
-          '有機會與能力，卻常因投入、成本或分配不清，使成果難以留下。',
-        ][x.element]
-      : states[0];
+  const before = states[0];
   const after = banned
     ? `本命目前不適合繼續加強這個方向。若再增加，較容易出現：${states[2]}`
     : fav
@@ -229,16 +211,7 @@ function elementCard(a, x) {
       under: states[0],
       balanced: states[1],
       over: states[2],
-      practice:
-        a.diagnosis.primary.id === 'wealth-channel'
-          ? [
-              '用清楚的分工、責任與合作規範收斂個人投入，讓成果受到合理保護。',
-              '讓學習與支持接到一項實際成果即可，減少反覆準備與替人照顧，避免又把責任留在自己身上。',
-              '維持基本穩定，將額外責任分出去，減少只因習慣而繼續承擔的安排。',
-              '把專業整理成可交付的成果、工具或服務，讓做法能被理解並重複使用。',
-              '讓成果接到明確需求，分清投入、回報與分配，為適合的機會留下餘裕。',
-            ][x.element]
-          : functionalPractice(a, x).action,
+      practice: functionalPractice(a, x).action,
     },
   );
 }
@@ -251,123 +224,114 @@ export function currentReferenceYear(a, now = Date.now()) {
 }
 export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const g = a.facts.gods;
-  const ranked = [...GODS].sort((x, y) => g[y] - g[x] || GODS.indexOf(x) - GODS.indexOf(y));
+  const ranked = [
+    a.patterns.monthJudgment.name,
+    a.patterns.assist.find((x) => g[x] >= 0.2) || a.patterns.monthJudgment.name,
+  ];
   const first = STYLE[ranked[0]],
-    second = STYLE[ranked[1]],
-    daily = STYLE[a.chart.pillars[2].hidden[0].god];
+    second = STYLE[ranked[1]];
   const financial = a.diagnosis.primary.id === 'wealth-channel';
   const weak = a.strength.state === '承格不足';
-  const output = a.patterns.primary.id === 'PAT-02' || a.patterns.primary.id === 'PAT-06';
-  const peers = g.比肩 + g.劫財 > g.正財 + g.偏財;
   const periods = a.chart.luck.flatMap((l) => clientLuck(a, l));
-  const financeSummary = financial
-    ? '財運屬於有賺錢能力、也有累積空間，但留財容易受合作與責任分配影響的類型。主要瓶頸不是沒有機會，而是收入增加後，投入與共同支出也跟著增加。'
-    : weak
-      ? '財運需要先站穩收入基礎，再逐步擴大。機會不一定少，但容易伴隨時間、人力與成本要求；早期累積較費力，收入與可用餘裕未必同步成長。'
-      : output
-        ? '財運偏向憑專業成果逐步累積。方法越成熟、成果越容易被使用，收入越有延伸空間；相較偶發機會，更適合持續深化一條已有回應的收入主線。'
-        : '財運偏向隨職責、經驗與可持續交付逐步改善。收入成長較需要清楚的位置與報酬安排；累積的穩定度比短期同時增加多個方向更重要。';
   const financeRows = periods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.stage, p.money]);
+  const mechanisms = financialMechanisms(a.facts, a.strength);
+  const moneyResult = financeConclusions(mechanisms);
+  const basis = structureBasis(a);
+  const structureOutcome =
+    {
+      'PAT-02': '較適合由專業成果接到需求；能做成、能被使用，再談擴大收入。',
+      'PAT-03': '較適合用具體方法處理難題；先讓壓力變成可完成的任務，再累積位置。',
+      'PAT-04': '較適合先掌握方法與可靠支持，再承擔要求；急著硬接反而削弱表現。',
+      'PAT-05': '較適合讓報酬、職責與正式位置同步成長；有機會仍須核對權限。',
+      'PAT-06': '較適合把不同見解整理成有方法、能驗證的成果，再爭取採用。',
+    }[a.patterns.primary.id] ||
+    (weak
+      ? '目前較需要穩定方法與支持，再擴大責任及對外成果。'
+      : '先維持月令所需的承接，再把已有能力放到可持續完成的工作中。');
   const essence = [
-    card('一 真實性格與外在表現', `你${first[0]}，同時也${second[0]}。`, [
-      financial
-        ? '你有自己的判斷，也能注意到外部機會。真正的拉扯在於：希望事情往前發展，卻又不太放心讓別人接手。因此常會多做一點、多顧一點，最後把成果與責任一起留在自己身上。'
-        : `平常較容易展現${first[0]}的一面；事情牽涉共同安排時，${second[1]}。你的表現會隨熟悉程度改變，並非所有場合都用同一種方式回應。`,
-      weak
-        ? '遇到新要求時，容易先想辦法完成，之後才感到時間與精力不足。較適合責任範圍清楚、能取得必要支持的環境。'
-        : '熟悉的事情通常能持續投入，但也容易因已有一套做法而不願交接。當分工清楚時，能力較能轉成長期成果。',
-    ]),
-    card('二 不易表露的內在拉扯', first[1] + '。', [
-      `你不一定會立即表達不滿，可能先把事情處理完；累積久了，才發現自己在意的其實是對方有沒有理解投入，以及責任是否合理。${second[1]}，因此同一件事可能讓你同時考慮效率與公平。`,
-      '這種模式的代價是：外表看似仍能配合，心裡卻已逐步減少投入。若長期只靠自己維持局面，容易把能承擔的能力變成必須承擔的習慣。',
-    ]),
+    card(
+      '一 命局結構與人生主線',
+      structureOutcome,
+      [
+        a.worldRule + '。',
+        financial
+          ? '本局的限制在比劫與財路的接續，重點是讓產出、交易與個人可用資源能接起來；不能僅憑此斷定現實中必有合作糾紛。'
+          : weak
+            ? '新增工作與機會容易先增加承接負荷；適合先讓方法、人力與可完成範圍相稱。'
+            : '既有能力能否延續，取決於主結構的相神與出口能否保留；增加工作量本身不等於發展。',
+      ],
+      { basis: basis.join(' ') },
+    ),
+    card(
+      '二 性格與日常表現',
+      `月令帶出的做事傾向是${STYLE[a.patterns.monthJudgment.name][0]}。`,
+      [
+        structureOutcome,
+        weak
+          ? '陌生要求出現時，先取得可用的方法與分擔，較能保留表現；一味加倍投入會壓縮恢復空間。'
+          : a.strength.concentrated
+            ? '已有根氣支持持續投入；遇到分歧時，宜保留對外成果的出口，避免只強化原有做法。'
+            : '現有承載需配合工作範圍，熟悉領域可持續累積，新要求則需要分段承接。',
+      ],
+      { basis: basis[0] },
+    ),
     card(
       '三 核心優勢與能力組合',
-      financial || output
-        ? '較適合把專業做深，再整理成能交付、能延續的成果。'
-        : weak
-          ? '較適合先有方法與支持，再逐步擴大責任。'
-          : '較適合在清楚的權責下累積經驗，逐步取得更完整的位置。',
+      structureOutcome,
       [
+        moneyResult.income,
         financial
-          ? '你的優勢較容易出現在把事情做成、整合實務及維持交付的工作。專業負責、流程改善、產品或服務交付，都可以成為發展方向；若所有環節都只能由你親自處理，成長也容易受個人時間限制。'
-          : `你${first[0]}的特徵，在有明確成果與回饋的工作中較容易發揮。責任模糊、要求持續變動而缺少授權的安排，則較容易放大${second[1]}的困擾。`,
-        financial
-          ? '發展主線是先讓專業形成成果，再把合作、報酬與責任安排好，之後才擴大規模。'
-          : weak
-            ? '發展主線是先站穩能獨立完成的範圍，再增加機會；基礎成熟後，承擔更多才有累積效果。'
-            : '發展主線是持續做出可信賴的成果，讓責任與位置一起成長。',
+          ? '優勢需要由成果接到需求，並保留財與官殺的承接；只有投入、沒有回應時，應先調整接續方式。'
+          : `目前先處理${a.diagnosis.primary.name}，再擴大能持續負責的範圍。`,
       ],
+      { basis: basis[1] },
     ),
   ];
   const finance = [
-    card('一 財富發展潛力與收入來源', financeSummary, [
-      financial
-        ? '收入來源可隨專業與合作逐步打開，但不屬於只要多接事情就會自然留下財富的模式。當個人投入、共同責任與分配混在一起，容易出現忙得更多、留下的卻沒有增加。'
-        : '整體累積更依賴可持續的收入方式，以及收入增加後能否保留餘裕。短期看起來忙碌或機會變多，未必代表財務狀態已改善。',
+    card('一 財富發展潛力', moneyResult.income + moneyResult.retention, [moneyResult.expense], {
+      basis: financeBasis(a, mechanisms),
+    }),
+    card('二 收入如何產生', moneyResult.income, [
+      mechanisms.outputSuppressed.length
+        ? '本局同時有印制食傷，需先保留交付出口；研究與準備尚未轉成成果前，不把投入當作收入。'
+        : mechanisms.outputWealth.length
+          ? '產出與財的接續已有條件，仍需透過需求、交付與實際收款完成；不保證每次投入都能換回報酬。'
+          : '本局未形成完整的產出到付費接續，宜先確認實際報酬來源，避免同時開出過多尚未成熟的方向。',
     ]),
-    card(
-      '收入進來的方式',
-      financial || output
-        ? '專業成果、可延續的服務與具體問題解決，是較有發展空間的收入來源。'
-        : '責任與報酬能清楚對應的工作，是較容易累積的收入來源。',
-      [
-        financial
-          ? '當經驗被整理成清楚的成果，別人較容易理解價值，你也較有機會從單純執行走向負責完整交付。收入改善不只靠工時，而是來自成果更成熟、使用範圍更明確。'
-          : weak
-            ? '收入起步時可能先付出較多適應與學習成本。待方法成熟、能持續完成同類工作後，報酬與餘裕才較有機會一起改善。'
-            : '既有經驗若能持續被採用，收入較有穩定改善的空間；頻繁更換尚未成熟的方向，反而容易中斷累積。',
-      ],
-    ),
-    card(
-      '四 主要漏財模式與改善方向',
-      peers || financial
-        ? '較需留意合作分配、共同支出與長期補位造成的耗損。'
-        : '較需留意新增機會帶來的交付成本與持續責任。',
-      [
-        financial
-          ? '你可能不缺處理事情的能力，卻容易把照顧關係、維持進度與完成成果都視為自己的責任。當收入先被這些安排吸收，即使表面已有進展，實際可留下的成果仍可能有限。'
-          : '支出較容易藏在反覆修改、維護、學習與照顧既有承諾之中。收入方式穩定後，這些持續成本會比一時的大筆花費更影響累積。',
-      ],
-    ),
-    card('二 財運轉折與大運時間線', '早年的資源累積逐步轉為成年後的收入與成果。', [], {
+    card('三 收入如何成為可自由運用的財', moneyResult.retention, [
+      mechanisms.peerDistribution.length
+        ? '分配問題的觸發在非日主的比劫透干直接制財，須分清報酬歸屬與共同資源；不直接認定現實中存在特定合夥人。'
+        : mechanisms.wealthControlled.length
+          ? '直接制財仍需辨別資金用途與承接方式，不將所有財星受制都改寫成分潤或替人花錢。'
+          : '目前沒有直接分財條件，應從收款與完成成本核對餘額，不先假定合作耗損。',
+    ]),
+    card('四 支出與財務責任', moneyResult.expense, [
+      mechanisms.wealthAuthority.length
+        ? '財官或財殺有位置接續，收入與履約標準可能一起成長；新增固定成本前，先確認報酬能否持續承接。'
+        : mechanisms.outputSuppressed.length
+          ? '支出來自準備壓縮產出，改善方向是讓方法回到實際應用，減少尚無用途的重複投入。'
+          : '未符合財生官殺的責任支出條件，不延伸為家庭支出或共同負擔；依實際成本與承接能力安排。',
+    ]),
+    card('五 財運轉折與大運時間線', '大運說明持續背景，年度細節呈現新增或轉向的作用。', [], {
       table: { headers: ['期間', '年齡', '大運', '人生階段', '財務發展'], rows: financeRows },
     }),
   ];
-  finance.splice(
-    2,
-    0,
-    card(
-      '三 有助與消耗財運的人際模式',
-      financial || peers
-        ? '會一起完成責任、願意談清分配的人能幫助累積；只把機會帶來、卻把後續留給你的人，較容易消耗收入。'
-        : '能讓專長接到適合需求的人有助累積；只增加要求、卻不提供明確回應的往來較容易耗損。',
-      [
-        financial
-          ? '有助益的互動，是對方把需求、費用與決定講清楚，讓你能把工作完成並取得相應報酬。消耗性的互動則常先以關係或急迫性請你處理，等你接手後，修改與後續才陸續增加。'
-          : '有助益的互動會讓你的方法被採用，或讓正式責任有適當支持。消耗性往來則容易讓你花很多時間解釋、研究與補足，卻難確認何時完成。',
-        '這些模式可能出現在同事、客戶、親友或共同承擔費用的人之間。真正影響財務的，是對方做了什麼、你接下了什麼，以及報酬和持續責任最後落在誰身上。',
-      ],
-    ),
-  );
   essence.push(
     card(
       '四 壓力下的反應與恢復能力',
       financial
-        ? '遇到混亂時較能先把事情接住，真正需要調整的是何時停止獨力補位。'
+        ? '能持續投入是優勢，壓力增加時更需分清內部投入與可對外完成的成果。'
         : weak
           ? '壓力來時較容易先加倍投入，恢復的關鍵在取得方法與實際分擔。'
           : '壓力會促使你重新安排做法；目標清楚時能持續投入，規範反覆時則較容易內耗。',
       [
         `受評價或競爭時，${first[1]}；責任超載後，${second[1]}。你可能用持續做事維持表面的穩定，卻把需要支持的部分延後說明。`,
         financial
-          ? '恢復力較能來自減少沒有對應報酬的補位，把能交接的部分交出去，再把精力放回真正能完成、能延續的專業。'
+          ? '恢復力較能來自收斂尚未有回應的投入，保留能接到需求的成果，讓付出與可用餘裕重新接續。'
           : '恢復力較能來自重新確認一個可完成的範圍，讓進度重新可見，而非同時修補所有問題。',
       ],
     ),
   );
-  const timelineIndex = finance.findIndex((c) => c.title.startsWith('二 '));
-  if (timelineIndex >= 0) finance.splice(2, 0, ...finance.splice(timelineIndex, 1));
   const relations = relationshipCards(a, referenceYear);
   const periodCards = [
     card('一 壓力來源與大運轉折', '依年齡與各階段的變化，整理生活中的主要發展。', [], {
@@ -443,9 +407,15 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       '一 整體五行取用總評',
       `整體五行優先順序：${natalOrder}。`,
       [
-        financial
-          ? '整體較需要讓專業接到實際需求，再以清楚的權責與交付保護累積。水、木、金分別協助機會承接、責任收斂與專業表達；火土保留必要程度，過度加強容易回到準備過多、責任集中與付出難以留下的狀態。'
-          : `整體以${a.use.core === null ? '維持既有配合' : ELEMENTS[a.use.core] + '所帶來的改善'}為主，並依序讓其他有利方向承接。排在後面的五行保留必要功能，不把額外投入當成主要解法。`,
+        ...a.use.order.map((e) => {
+          const x = a.use.elements[e];
+          return `${x.name}（${x.roles.join('、')}）：${x.decisionPath[0]?.reason || '目前無直接救應依據，不主動增加'}。使用條件：${x.conditions[0].replace(/作用力\s*≥\.8/g, '有效承接').replace(/作用力須回到 \.5–2\.5/g, '作用須取得制化平衡')}。`;
+        }),
+        `成格所需相神功能：${a.use.patternAssistants.length ? a.use.patternAssistants.map((e) => ELEMENTS[e] + (e === a.use.core ? '（同時處理主病，主標籤列為核心用神）' : '')).join('、') : '目前未見可直接發用的承接'}；格神與救應角色分開判斷。`,
+        ...(a.use.tiedOrders.length
+          ? ['排序中同層候選採固定五行次序列示；同層之間未判定吉凶差距，主要取捨以角色及條件為準。']
+          : []),
+        `實際改善的操作次序：${a.use.operationOrder.map((e) => ELEMENTS[e]).join(' > ')}。${a.use.operationReason}`,
       ],
       { scope: 'overall' },
     ),
@@ -467,9 +437,9 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       const annual = {
         year: referenceYear,
         conclusion: `${referenceYear} 年的${growth.status}。${growth.current}`,
-        before: growth.current + ' ' + base.before,
+        before: growth.current,
         after: growth.growth,
-        under: base.under,
+        under: growth.under,
         balanced: growth.balanced,
         over: growth.excess,
         practice: growth.practice + ' ' + growth.condition,
@@ -478,7 +448,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
         ...base,
         overall: { ...base },
         annual,
-        periodAdjustments: yearUses.map((x) => ({
+        periodAdjustments: (yearUses.length > 1 ? yearUses : []).map((x) => ({
           label: `${date(a, x.p.start)} 至 ${date(a, x.p.end)}・${x.p.luck?.text || '起運前'}・${year.pillar.text}`,
           text: x.use.elements[e].growth + ' ' + x.use.elements[e].condition,
         })),
@@ -489,7 +459,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const chapters = [
     '第一章 性格與人生主線',
     '第二章 財運與累積',
-    '第三章 姻緣、桃花與子女',
+    '第三章 親密關係、子女與合作',
     '第四章 大運與流年',
     '第五章 五行與生活狀態',
   ];

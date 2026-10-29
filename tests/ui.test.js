@@ -68,6 +68,10 @@ it('完整列印有五個主題，離開列印後恢復畫面', () => {
     content = document.querySelector('#print-report').textContent;
     expect(document.querySelectorAll('#print-report .report-page')).toHaveLength(5);
     expect(document.querySelector('#print-report details')).toBeNull();
+    expect(document.querySelector('#print-report .luck-track')).toBeNull();
+    expect(document.querySelector('#print-report .year-picker')).toBeNull();
+    expect(document.querySelector('#print-report button')).toBeNull();
+    expect(content).toContain('起運時刻');
     expect(content).not.toMatch(/作用力|形成原因|成立條件|裁決依據|mbas-1\./);
   });
   document.querySelector('#print').click();

@@ -1,8 +1,8 @@
-# Windows 更新現有專案
+# 更新現有GitHub專案至1.4.0
 
-先保留原本專案的備份。將這個 ZIP 解壓縮，將 `mbas-bazi` 內的檔案覆蓋到 `D:\Rex\mbas-bazi`。保留該資料夾原本的 `.git`，不要清空 GitHub，也不要刪除 Git 紀錄。
+將ZIP解壓，把 `mbas-bazi` 裡的全部內容覆蓋到 `D:\Rex\mbas-bazi`；保留原本 `.git`，不要清空GitHub，也不要多套一層同名資料夾。如有自行改動，先備份。
 
-確認沒有多套一層 `mbas-bazi`，並確認 `package.json` 的版本為 1.3.1。開啟 CMD：
+CMD：
 
 ```cmd
 cd /d "D:\Rex\mbas-bazi"
@@ -10,24 +10,12 @@ npm ci
 npm run check
 git status
 git add .
-git commit -m "Fix structural use adjudication and expand formal reports"
+git commit -m "Fix structural judgments and annual rule deltas"
 git push origin main
 ```
 
-若 `git push` 顯示遠端有新提交，不要使用 force；先保留錯誤訊息與本機變更，確認遠端差異再合併。若有自己額外修改的程式，也請先備份或提交再覆蓋。
+確認Pages來源為GitHub Actions。Actions的測試、建置與deploy皆成功後開啟網站並Ctrl+F5，頁尾應為 **v1.4.0**。若遠端有新提交，先確認差異再合併，不用force推送。
 
-Actions 成功後重新整理網站，確認「方法說明」中顯示 `mbas-1.1.0` 及 `zh-TW-1.1.0`。用相同出生資料重算，舊 PDF 不會自動更新。
+本版沒有附新的命盤HTML預覽或PDF。舊版 `docs/REPORT_REVIEW.html` 若仍留在本機，不代表新系統的輸出；驗收請自行在網站輸入資料。
 
-本次 1.1.1 表單更新可用提交訊息 `Update birth form to single-column layout`，方法說明會另列 `ui-1.1.1`。
-
-## 1.2.0 更新確認
-
-以本包內容覆蓋現有原始碼並保留 .git。npm ci、npm run check 成功後提交推送。提交訊息可用 `Rewrite client reports and add age-aware timelines`。部署完成後 Ctrl+F5，頁尾顯示 v1.2.0。舊 PDF 仍需重新產生。
-
-## 1.3.0 更新
-
-覆蓋原始碼並保留 .git，執行 npm ci、npm run check 後再提交推送。Actions會新增執行 test:scenarios。提交訊息可用 `Rebuild period scenarios and contextual element guidance`。部署成功後頁尾顯示 v1.3.0。預覽與第三章均應顯示姻緣、桃花與子女；五行頁的年份切換會更新所在大運與調整內容。
-
-## 1.3.1 更新
-
-覆蓋原始碼並保留 .git，執行 npm ci、npm run check 後提交推送。頁尾顯示v1.3.1。提交訊息可用 `Restore chart details and separate natal and annual guidance`。舊PDF需重新產生。
+請檢查：出生下拉選單、四柱詳細資料、五個頁籤；本質短依據；財務三問題；緣分合作專節；原局／操作／當期三種順序；交運年份分段；A4列印預覽。瀏覽器原生網址及日期須關閉「頁首及頁尾」。
