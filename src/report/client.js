@@ -9,6 +9,7 @@ import moment from 'moment-timezone/moment-timezone.js';
 import { ELEMENTS, STEM_ELEMENT, HIDDEN, god } from '../data/constants.js';
 import { periodImpact, annualReport } from '../engine/periods.js';
 import { formatTime } from '../calendar/time.js';
+import { lifeProfile } from './life-story.js';
 
 // Presentation owns no use adjudication. It translates the single natal result
 // and period results into age-appropriate conclusions, without exporting traces.
@@ -122,31 +123,31 @@ const ELEMENT_STATES = [
     under: '想法與方向散開，眼前事情雖多，卻不容易決定下一步；遇到限制時也較難調整。',
     balanced: '目標更清楚，知道哪些事情值得投入，也能在改變做法時保留長期方向。',
     over: '不斷新增目標，對進度與成長要求過高，容易催促自己或他人。',
-    practice: '選定一項可持續的成長目標，將新機會安排在既有節奏能承接的範圍。',
+    practice: '選定一項真正想長久保留的生活方向，讓新安排不擠掉休息與重要關係。',
   },
   {
     under: '已有想法或能力，卻較少表達與展示，旁人不容易理解你的投入。',
-    balanced: '表達與行動較及時，成果容易被看見，與人的互動也較有溫度。',
-    over: '急著表態、回應或承接，工作節奏變密，容易先投入熱情再發現後續負擔。',
-    practice: '用簡潔的表達與固定節奏展示成果，同時保留足夠的安靜與休息。',
+    balanced: '表達與行動較及時，心意容易被理解，與人的互動也較有溫度。',
+    over: '急著表態、回應或安排，生活節奏變密，容易先投入熱情再發現後續負擔。',
+    practice: '用簡潔表達讓重要的人理解自己，同時保留足夠的安靜與休息。',
   },
   {
     under: '安排缺少落點，容易承諾後才處理細節，日常責任難以維持一致。',
     balanced: '分工與生活節奏較穩定，能完成既有承諾，也保留必要彈性。',
     over: '過度維持原有安排，事情習慣自己承擔，責任越積越多卻不容易移交。',
-    practice: '整理責任與完成範圍，保留能持續的安排，讓不必由自己承擔的事有移交空間。',
+    practice: '整理承諾與生活界線，保留能長久維持的安排，不必由自己承擔的事交還給當事人。',
   },
   {
-    under: '有能力卻缺少收斂，成果難以整理成他人可理解、可使用的形式。',
-    balanced: '做法與標準較清楚，能將經驗轉成明確成果，決策與交付更俐落。',
+    under: '想法很多卻缺少界線，不容易決定哪些該留下、哪些可以放下。',
+    balanced: '界線與判斷較清楚，能保留真正重要的人事物，也更敢拒絕不適合的安排。',
     over: '要求過細、判斷過快，容易因標準不一而增加批評與對立。',
-    practice: '把專業整理成清楚的成果與交付範圍，標準用來協作，而非否定所有不同做法。',
+    practice: '替重要承諾設定清楚界線，標準用來保護生活，而不是否定所有不同做法。',
   },
   {
     under: '投入與機會之間缺少連結，處理事情較僵，遇到變化時選擇有限。',
-    balanced: '較能辨識機會、調度時間與資源，已有成果也更容易接到實際回應。',
-    over: '機會同時增加，時間與投入被分散，容易往來頻繁卻難以留下成果。',
-    practice: '保留少數能接續既有成果的機會，讓資訊、時間與實際需求形成連結。',
+    balanced: '較能辨識機會、調度時間與資源，生活保有流動，也不失去自己的方向。',
+    over: '機會同時增加，時間與心力被分散，容易往來頻繁卻沒有真正休息。',
+    practice: '保留少數真正想體驗的選擇，讓時間、金錢與內在感受彼此對得上。',
   },
 ];
 function elementCard(a, x) {
@@ -155,29 +156,29 @@ function elementCard(a, x) {
   // cannot determine what adding this element does to this person.
   const states = [
     [
-      '自主與同儕分工不足，容易過度依賴他人，或不敢表明自己的安排。',
-      '較能自主行動，也能把工作分出去，既不全靠別人，也不把所有責任留給自己。',
-      '對方法與分配過度堅持，同儕競爭、共同責任與支出容易增加。',
+      '自主與人際界線不足，容易過度依賴他人，或不敢表明自己的安排。',
+      '較能自主生活，也能接受彼此分擔，既不全靠別人，也不把所有責任留給自己。',
+      '對方法與公平過度堅持，人際競爭、共同責任與支出容易增加。',
     ],
     [
-      '能力留在心裡或個人經驗中，別人不容易看見成果，也不容易接續你的工作。',
-      '想法能整理成清楚成果，表達較順，工作較容易完成並交由他人使用。',
-      '持續增加產出與改動，卻沒有足夠時間收尾；對別人的做法也容易過於挑剔。',
+      '感受與能力留在心裡，別人不容易理解你真正想表達或分享的內容。',
+      '想法與感受較能表達，創作、分享與人際互動都有更自然的出口。',
+      '持續增加活動、表達與改動，卻沒有足夠時間沉澱；對別人的做法也容易過於挑剔。',
     ],
     [
-      '已有能力卻接不到適合的機會，投入與回報之間容易出現落差。',
-      '較能把專業接到實際需求，時間、成本與回報有較清楚的對應。',
-      '同時承接太多機會，前期投入與後續責任增加，最後忙碌多於可留下的餘裕。',
+      '生活缺少流動與選擇，雖然付出不少，時間、金錢與感受之間仍容易有落差。',
+      '較能辨識適合自己的機會，時間、金錢與生活體驗有較清楚的對應。',
+      '同時接受太多邀約與機會，前期投入與後續承諾增加，最後忙碌多於可留下的餘裕。',
     ],
     [
-      '缺少共同標準，事情容易依個人習慣各做各的，責任與決策也較模糊。',
-      '權責與目標較清楚，個人的力量能用在該負責的地方，對外合作更有秩序。',
-      '規範、考核與自我要求過密，容易緊繃，關係也可能變成一方管束另一方。',
+      '承諾與界線較模糊，容易配合到後來才發現責任超出原本意願。',
+      '生活規則與承諾較清楚，知道哪些需要負責、哪些可以拒絕，內在更安定。',
+      '規範、評價與自我要求過密，容易緊繃，關係也可能變成一方管束另一方。',
     ],
     [
-      '遇到陌生問題缺少可靠方法，容易一邊做一邊承擔反覆試錯的負擔。',
-      '理解、方法與支持足以協助行動，學到的內容能轉成獨立完成事情的能力。',
-      '準備與照顧過多，行動反而變慢；也可能因支持增加而維持原本不必要的負擔。',
+      '遇到陌生變化時缺少理解與支持，容易一邊擔心、一邊承受反覆試錯的負擔。',
+      '理解、休養與支持足以安定內在，學到的內容也能幫助自己作出選擇。',
+      '準備、擔心與照顧過多，生活反而停滯；也可能因依賴支持而維持原本不必要的負擔。',
     ],
   ][relation];
   const banned = x.roles.includes('主要忌神');
@@ -221,8 +222,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
     a.patterns.monthJudgment.name,
     a.patterns.assist.find((x) => g[x] >= 0.2) || a.patterns.monthJudgment.name,
   ];
-  const first = STYLE[ranked[0]],
-    second = STYLE[ranked[1]];
+  const first = STYLE[ranked[0]];
   const financial = a.diagnosis.primary.id === 'wealth-channel';
   const weak = a.strength.state === '承格不足';
   const periods = a.chart.luck.flatMap((l) => clientLuck(a, l));
@@ -230,55 +230,45 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const mechanisms = financialMechanisms(a.facts, a.strength);
   const moneyResult = financeConclusions(mechanisms);
   const basis = structureBasis(a);
+  const life = lifeProfile(a);
   const structureOutcome =
     {
-      'PAT-02': '較適合由專業成果接到需求；能做成、能被使用，再談擴大收入。',
-      'PAT-03': '較適合用具體方法處理難題；先讓壓力變成可完成的任務，再累積位置。',
-      'PAT-04': '較適合先掌握方法與可靠支持，再承擔要求；急著硬接反而削弱表現。',
-      'PAT-05': '較適合讓報酬、職責與正式位置同步成長；有機會仍須核對權限。',
-      'PAT-06': '較適合把不同見解整理成有方法、能驗證的成果，再爭取採用。',
+      'PAT-02': '適合把喜歡的事慢慢做熟，讓創造、分享與舒服的日常同時存在。',
+      'PAT-03': '有面對難題的力量，但不必一直待在危機裡；值得的挑戰與能喘息的生活要同時保留。',
+      'PAT-04': '先理解自己、接住支持，再面對外界要求；被照顧與休息也是人生的一部分。',
+      'PAT-05': '重視穩定與承諾，也需要為自己保留選擇；生活不該只剩下應該完成的責任。',
+      'PAT-06': '適合保留獨立思考與個人風格，同時讓表達成為理解與連結，而非持續對抗。',
     }[a.patterns.primary.id] ||
     (weak
-      ? '目前較需要穩定方法與支持，再擴大責任及對外成果。'
-      : '先維持月令所需的承接，再把已有能力放到可持續完成的工作中。');
+      ? '先把生活安頓到能恢復的程度，再回應外界期待；不必以硬撐證明能力。'
+      : '先照顧自己的節奏、感受與重要關係，再安排外在目標。');
   const essence = [
+    card('一 人生本質與核心需求', life.conclusion, [life.coreNeed, life.lifeRule], {
+      basis: basis.join(' '),
+    }),
     card(
-      '一 命局結構與人生主線',
-      `主結構為${a.patterns.primary.name}，${weak ? '承接仍需支持' : financial ? '能投入做事，但財路的接續需要保護' : '長處需配合現有承接持續發揮'}。`,
+      '二 個性與日常反應',
+      `平常的外在傾向是${STYLE[a.patterns.monthJudgment.name][0]}，但真正的內在需要不只表現在做事方式。`,
       [
-        a.worldRule + '。',
-        financial
-          ? '本局的限制在比劫與財路的接續，重點是讓產出、交易與個人可用資源能接起來；不能僅憑此斷定現實中必有合作糾紛。'
-          : weak
-            ? '新增工作與機會容易先增加承接負荷；適合先讓方法、人力與可完成範圍相稱。'
-            : '既有能力能否延續，取決於主結構的相神與出口能否保留；增加工作量本身不等於發展。',
-      ],
-      { basis: basis.join(' ') },
-    ),
-    card(
-      '二 性格與日常表現',
-      `月令帶出的做事傾向是${STYLE[a.patterns.monthJudgment.name][0]}。`,
-      [
-        structureOutcome,
-        weak
-          ? '陌生要求出現時，先取得可用的方法與分擔，較能保留表現；一味加倍投入會壓縮恢復空間。'
-          : a.strength.concentrated
-            ? '已有根氣支持持續投入；遇到分歧時，宜保留對外成果的出口，避免只強化原有做法。'
-            : '現有承載需配合工作範圍，熟悉領域可持續累積，新要求則需要分段承接。',
+        life.gift,
+        `在熟悉與安全的情境裡，${first[2]}；感到被評價、催促或不被理解時，${first[1]}。同一個人會因安全感與餘裕不同而呈現不同反應。`,
       ],
       { basis: basis[0] },
     ),
     card(
-      '三 核心優勢與能力組合',
-      structureOutcome,
+      '三 內在拉扯與反覆課題',
+      life.tension,
       [
-        moneyResult.income,
-        financial
-          ? '優勢需要由成果接到需求，並保留財與官殺的承接；只有投入、沒有回應時，應先調整接續方式。'
-          : `目前先處理${a.diagnosis.primary.name}，再擴大能持續負責的範圍。`,
+        life.lesson,
+        `${life.conflict}較適合先說明感受、需要與界線，再討論誰對誰錯；長期壓住自己的需要，最後通常會以疲累、疏離或突然拒絕表現出來。`,
       ],
       { basis: basis[1] },
     ),
+    card('四 快樂來源與恢復方式', life.joy, [
+      life.recovery,
+      '判斷一段生活是否適合，不只看是否有成就，也看睡眠與情緒能否恢復、是否仍有喜歡的事、能否拒絕不想要的安排，以及重要關係裡是否能做自己。',
+    ]),
+    card('五 一生適合的生活配置', structureOutcome, life.stages),
   ];
   const finance = [
     card('一 收入如何產生', moneyResult.income, [
@@ -306,30 +296,19 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       table: { headers: ['期間', '年齡', '大運', '人生階段', '財務發展'], rows: financeRows },
     }),
   ];
-  essence.push(
-    card(
-      '四 壓力下的反應與恢復能力',
-      financial
-        ? '能持續投入是優勢，壓力增加時更需分清內部投入與可對外完成的成果。'
-        : weak
-          ? '壓力來時較容易先加倍投入，恢復的關鍵在取得方法與實際分擔。'
-          : '壓力會促使你重新安排做法；目標清楚時能持續投入，規範反覆時則較容易內耗。',
-      [
-        `受評價或競爭時，${first[1]}；責任超載後，${second[1]}。你可能用持續做事維持表面的穩定，卻把需要支持的部分延後說明。`,
-        financial
-          ? '恢復力較能來自收斂尚未有回應的投入，保留能接到需求的成果，讓付出與可用餘裕重新接續。'
-          : '恢復力較能來自重新確認一個可完成的範圍，讓進度重新可見，而非同時修補所有問題。',
-      ],
-    ),
-  );
   const relations = relationshipCards(a, referenceYear);
   const periodCards = [
-    card('一 壓力來源與大運轉折', '依年齡與各階段的變化，整理生活中的主要發展。', [], {
-      table: {
-        headers: ['期間', '年齡', '大運', '階段', '發展重點'],
-        rows: periods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.stage, p.summary]),
+    card(
+      '一 人生階段與大運轉折',
+      '依年齡與各階段的變化，整理生活重心、關係與內在狀態的轉換。',
+      [],
+      {
+        table: {
+          headers: ['期間', '年齡', '大運', '階段', '發展重點'],
+          rows: periods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.stage, p.summary]),
+        },
       },
-    }),
+    ),
   ];
   const decisionPeriods = a.chart.luck.flatMap((l) => {
     const authority = ['正官', '七殺'].includes(god(a.facts.dm, l.stem));
@@ -338,29 +317,33 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
     if (!authority || !supportingRoute || c.rootsBroken || c.patterns.primary.status !== '成立')
       return [];
     return clientLuck(a, l)
-      .filter((s) => s.age >= 18 && s.age < 60)
+      .filter((s) => s.age >= 18)
       .map((s) => [
         s.dateLabel,
         s.ageLabel,
         l.text,
-        god(a.facts.dm, l.stem) === '正官'
-          ? '正式職務、評核與責任較容易成為發展主題；若權限與待遇同步到位，較能由執行走向決定。'
-          : '難題與急迫任務較容易把你推到需要拍板的位置；能否取得分擔與決策權，會決定這是累積還是持續補救。',
+        s.age >= 70
+          ? god(a.facts.dm, l.stem) === '正官'
+            ? '生活規則、照顧與長期安排需要更明確；保留本人選擇，讓協助服務於安心而非取代自主。'
+            : '臨時變動較容易打亂日常；預留可求助的人與替代安排，不必每次都由自己緊急處理。'
+          : god(a.facts.dm, l.stem) === '正官'
+            ? '承諾、家庭分工或外界期待較容易成為生活主題；清楚選擇願意承擔的部分，能讓穩定與自由並存。'
+            : '挑戰與變動較容易把你推到需要作決定的位置；能否取得分擔並保留休息，會決定這段時間是成長還是消耗。',
       ]);
   });
   periodCards.push(
     card(
-      '二 主導權提升的階段與條件',
+      '二 自主選擇與生活主導權',
       decisionPeriods.length
-        ? '較有機會取得位置的階段，通常同時要求你更明確地承擔與決定。'
-        : '目前未形成足以單獨指定權責提升年份的多項訊號，發展仍以已有工作逐步累積。',
+        ? '以下階段較容易遇到需要明確選擇、承諾或重新安排生活規則的情境。'
+        : '目前沒有足以單獨標出生活角色重大轉換的多項訊號，重點仍在依當時年齡與實際生活逐步調整。',
       [
-        financial
-          ? '對你而言，位置提升的關鍵是把能做的專業連到可決定的範圍。若只是被交付更多事情，卻不能決定交期、費用或人力，工作量增加仍可能落回原有耗損。'
-          : '位置提升需要可持續完成的工作與相應授權一起出現。名目上的升任若沒有支持，未必能讓既有長處更好發揮。',
+        '主導自己的人生，不等於每件事都自己扛，而是能決定要承諾什麼、拒絕什麼、把時間留給誰，以及什麼時候需要休息或求助。',
       ],
       decisionPeriods.length
-        ? { table: { headers: ['期間', '年齡', '大運', '可能發展'], rows: decisionPeriods } }
+        ? {
+            table: { headers: ['期間', '年齡', '大運', '生活中的可能轉變'], rows: decisionPeriods },
+          }
         : {},
     ),
   );
@@ -383,7 +366,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   periodCards.push(
     card(
       '四 當年發展與行動重點',
-      `${referenceYear} 年 ${yearView.pillar}，需放在所在大運的責任與機會背景中看待。`,
+      `${referenceYear} 年 ${yearView.pillar}，需放在所在大運與當前年齡的生活背景中看待。`,
       yearView.segments.flatMap((s) => [`${s.dateLabel}：${s.summary}`, s.money, s.relation]),
     ),
   );
@@ -474,15 +457,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       .map((s) => `${s.ageLabel}（${l.text}大運）`);
   });
   const overviews = [
-    card('本質總評', structureOutcome, [
-      a.worldRule +
-        '。' +
-        (weak
-          ? '整體發展先求能穩定承接，再增加責任；支持是否到位比一時增加機會更重要。'
-          : financial
-            ? '優勢在能持續投入與形成成果；較大的限制是投入到回報之間容易受占用牽制，需保留對外發揮及調度空間。'
-            : '整體發展取決於能否持續保留原有長處與承接，不宜讓新增要求壓過既有節奏。'),
-    ]),
+    card('本質總評', life.conclusion, [life.coreNeed, life.lifeRule]),
     card('整體財運總評', overallFinance(a).conclusion, [
       mechanisms.income === 'output-chain'
         ? '賺錢主線以可持續交付的專業為重，財富累積的關鍵在把報酬實際留下，而非只增加事情與工時。'
@@ -515,8 +490,8 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
               ? '主要限制延續原局，發展重點在改善既有瓶頸，而非僅因換年就全面轉向。'
               : '主導限制已有轉向，原本有效的方法需要配合當期條件調整。'),
       [
-        `${referenceYear} 年處於${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}，財務方面：${currentMoney.conclusion}`,
-        `當期先保留${currentCtx.priority === null ? '現有承接' : ELEMENTS[currentCtx.priority] + '的救應功能'}。十年背景與年度變化分開看，年度細節只列新增、加強或轉向的作用。`,
+        `${referenceYear} 年處於${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}，生活重點為${yearView.segments[0]?.domains.join('、') || '維持既有生活節奏'}。${yearView.segments[0]?.relation || ''}`,
+        `財務是生活的一部分：${currentMoney.conclusion}當期先保留${currentCtx.priority === null ? '現有承接' : ELEMENTS[currentCtx.priority] + '的救應功能'}，但不以工作或收入代替整體人生判斷。`,
       ],
     ),
     card(

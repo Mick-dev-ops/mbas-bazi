@@ -57,6 +57,11 @@ it('產生五頁命主報告，不展示規則、分數與裁決過程', () => {
     expect(document.querySelector('[aria-selected="true"]').getAttribute('href')).toBe('#' + hash);
   }
   expect(document.querySelectorAll('.report-card[data-element]')).toHaveLength(5);
+  changeRoute('essence');
+  const essence = document.querySelector('#page-essence').textContent;
+  expect(essence).toContain('快樂來源與恢復方式');
+  expect(essence).toContain('一生適合的生活配置');
+  expect(essence).not.toMatch(/工作|職務|交付|收入|報酬|升任/);
 });
 it('流年選單與大運按鈕能更新報告', () => {
   changeRoute('periods');

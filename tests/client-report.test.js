@@ -39,6 +39,21 @@ it('finance begins with a direct summary and includes dated age-aware luck and a
   expect(table.rows.every((r) => r.every((x) => typeof x === 'string' && x.length))).toBe(true);
   expect(clientAnnual(a, 2026).segments.every((s) => s.money.length > 30)).toBe(true);
 });
+it('essence describes a whole life rather than using career performance as personality', () => {
+  const p = buildClientReports(a, 2026).pages[0];
+  const text = JSON.stringify(p);
+  expect(p.overview.title).toBe('本質總評');
+  expect(p.cards.map((c) => c.title)).toEqual([
+    '一 人生本質與核心需求',
+    '二 個性與日常反應',
+    '三 內在拉扯與反覆課題',
+    '四 快樂來源與恢復方式',
+    '五 一生適合的生活配置',
+  ]);
+  for (const phrase of ['核心需求', '快樂來源', '早年：', '成年：', '中年：', '晚年：'])
+    expect(text).toContain(phrase);
+  expect(text).not.toMatch(/工作|職務|交付|收入|報酬|升任/);
+});
 it('2004–2014 is split at 12 and 18; under-18 conclusions do not contain adult financial or partner scenarios', () => {
   const slices = clientLuck(a, a.chart.luck[0]);
   expect(slices.map((s) => s.stage)).toEqual(['學齡期', '青春期', '成年初期']);
@@ -91,6 +106,9 @@ it('different natal charts produce different conclusions without changing adjudi
     calculate({ year: 2000, month: 1, day: 1, hour: 3, minute: 0, sex: '女', location: 'tw-0' }),
   );
   expect(JSON.stringify(x)).not.toBe(JSON.stringify(buildClientReports(b)));
+  expect(x.pages[0].overview.conclusion).not.toBe(
+    buildClientReports(b).pages[0].overview.conclusion,
+  );
   expect(JSON.stringify(a.use)).toBe(before);
 });
 
