@@ -9,12 +9,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:dist": "node scripts/verify-dist.mjs",
-    "check": "npm test && npm run test:scenarios && npm run build && npm run test:dist",
+    "check": "npm test && npm run test:integrity && npm run build && npm run test:dist",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "update:tz": "node scripts/update-timezones.mjs",
     "docs:rules": "node scripts/update-rule-docs.mjs && prettier --write docs/RULES.md",
-    "test:scenarios": "node scripts/verify-period-coverage.mjs"
+    "test:integrity": "node scripts/verify-period-coverage.mjs"
   },
   "keywords": [],
   "author": "",

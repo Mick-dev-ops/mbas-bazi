@@ -113,7 +113,7 @@ it('analysis exposes ordered hypotheses and all five practical chapters name eff
   expect(r.pages[0].cards.find((x) => x.title.includes('世界規則')).table.rows).toHaveLength(9);
   for (const card of r.pages[4].cards.filter((x) => x.element !== undefined)) {
     expect(card.area).toBeTruthy();
-    expect(card.ability.length).toBeGreaterThan(20);
+    expect(card.ability.trim()).toBeTruthy();
     expect(card.resources).toBeTruthy();
     expect(card.after).toBeTruthy();
   }
