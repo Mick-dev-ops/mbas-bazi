@@ -764,7 +764,12 @@ th {
 }
 @media (max-width: 540px) {
   .pillars {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(145px, 1fr));
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+  .pillar {
+    scroll-snap-align: start;
   }
 }
 
@@ -773,10 +778,6 @@ th {
   border-left: 2px solid #c9ba98;
   padding-left: 12px;
   font-size: 12px !important;
-}
-.print-note {
-  font-size: 11px;
-  max-width: 260px;
 }
 @media print {
   html,

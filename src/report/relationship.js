@@ -1,5 +1,5 @@
-import { financialMechanisms } from '../engine/finance.js';
-import { carrierLabel } from './basis.js';
+import { annualReport } from '../engine/periods.js';
+import { HIDDEN, god } from '../data/constants.js';
 const card = (title, conclusion, paragraphs = [], extra = {}) => ({
   title,
   conclusion,
@@ -33,6 +33,121 @@ const dayStyles = {
     '感受複雜時較容易先退回自己的空間，對方可能把慢熱理解為疏離',
   ],
 };
+
+const ageRange = (a, luck) => {
+  const from = Math.max(0, new Date(luck.start).getUTCFullYear() - a.chart.birth.year);
+  const to = Math.max(from, new Date(luck.end - 1).getUTCFullYear() - a.chart.birth.year);
+  return from === to ? `${from}歲` : `${from}–${to}歲`;
+};
+const mergeAges = (ages) => {
+  const sorted = [...new Set(ages)].sort((a, b) => a - b);
+  const groups = [];
+  for (const age of sorted) {
+    const last = groups.at(-1);
+    if (last && age - last.at(-1) <= 2) last.push(age);
+    else groups.push([age]);
+  }
+  return groups
+    .slice(0, 2)
+    .map((g) => (g.length === 1 ? `${g[0]}歲前後` : `${g[0]}–${g.at(-1)}歲`))
+    .join('、');
+};
+function relationshipForecast(a) {
+  const spouse = a.chart.birth.sex === '男' ? ['正財', '偏財'] : ['正官', '七殺'];
+  const output = ['食神', '傷官'];
+  const scoreYears = (gods, minAge, maxAge, palace) => {
+    const rows = [];
+    for (let age = minAge; age <= maxAge; age++) {
+      const year = a.chart.birth.year + age;
+      if (year < a.chart.solarYear || year > a.chart.birth.year + 110) continue;
+      const p = annualReport(a, year).segments[0];
+      const annualGods = [
+        god(a.facts.dm, p.annual.stem),
+        ...HIDDEN[p.annual.branch].map((s) => god(a.facts.dm, s)),
+      ];
+      const luckGods = p.luck
+        ? [god(a.facts.dm, p.luck.stem), ...HIDDEN[p.luck.branch].map((s) => god(a.facts.dm, s))]
+        : [];
+      const annualPos = p.luck ? 5 : 4;
+      let score = gods.includes(annualGods[0]) ? 3 : 0;
+      if (annualGods.slice(1).some((x) => gods.includes(x))) score += 2;
+      if (luckGods.some((x) => gods.includes(x))) score += 1;
+      const palaceActs = p.actions.filter(
+        (x) => x.positions.includes(palace) && x.positions.includes(annualPos),
+      );
+      if (palaceActs.some((x) => x.type.includes('合'))) score += 3;
+      else if (palaceActs.some((x) => /沖|刑|害/.test(x.type))) score += 2;
+      if (p.periodCapacity.state !== '承格不足') score += 1;
+      rows.push({ age, score });
+    }
+    return rows.sort((a, b) => b.score - a.score || a.age - b.age);
+  };
+  const marriageRows = scoreYears(spouse, 20, 50, 2);
+  const marriageTop = marriageRows.filter(
+    (x) => x.score >= Math.max(4, marriageRows[0]?.score - 1),
+  );
+  const marriageAges = mergeAges(marriageTop.slice(0, 6).map((x) => x.age));
+  const spouseForce = a.facts.items
+    .filter((x) => spouse.includes(x.god) && x.force >= 0.2)
+    .reduce((sum, x) => sum + x.force, 0);
+  const disturbed = a.action.effects.some(
+    (x) => /沖|刑|害/.test(x.type) && x.positions.includes(2),
+  );
+  const marriage =
+    spouseForce >= 0.8
+      ? `一生有明顯姻緣，不屬於感情機會薄弱的類型。較容易把關係定下來的時間在${marriageAges || '成年中後期'}。`
+      : spouseForce >= 0.3 || marriageRows[0]?.score >= 5
+        ? `一生有姻緣，但通常需要相處一段時間才會確認承諾。較明顯的定下來窗口在${marriageAges || '三十歲前後'}。`
+        : `姻緣不是沒有，但感情通常發展較慢，寧可晚一點確認也不適合因年齡壓力倉促決定；較值得留意的窗口在${marriageAges || '三十歲以後'}。`;
+  const childRows = scoreYears(output, 23, 45, 3);
+  const childTop = childRows.filter((x) => x.score >= Math.max(4, childRows[0]?.score - 1));
+  const childAges = mergeAges(childTop.slice(0, 5).map((x) => x.age));
+  const childForce = a.facts.items
+    .filter((x) => output.includes(x.god) && x.force >= 0.2)
+    .reduce((sum, x) => sum + x.force + (x.position === 3 ? 0.25 : 0), 0);
+  const childCount =
+    childForce >= 1.8
+      ? '傳統命理的數量傾向以2名為主，也可能落在1–3名之間'
+      : childForce >= 0.7
+        ? '傳統命理的數量傾向以1–2名為主'
+        : '子女緣較精簡，傳統命理傾向以1名或少量為主';
+  const parentSupport = a.facts.items
+    .filter((x) => x.position <= 1 && ['正印', '偏印'].includes(x.god) && x.force >= 0.2)
+    .reduce((sum, x) => sum + x.force, 0);
+  const parentTension = a.action.effects.some(
+    (x) => /沖|刑|害/.test(x.type) && x.positions.includes(2) && x.positions.some((p) => p <= 1),
+  );
+  const parents = parentTension
+    ? '與父母有情分，但生活選擇與做法容易不同。年輕時較常感到被要求或不被理解；成年後把關心、決定權與實際協助分開，關係反而較穩。'
+    : parentSupport >= 0.8
+      ? '父母緣與家庭支持較明顯，遇到重要轉折時通常有人願意提供意見或實際協助；需要注意的是，關心有時也會變成介入。'
+      : '與父母的緣分偏向各自承擔，不一定常把感受說出口。關係要靠固定聯絡與具體照顧維持，而不是期待彼此自然理解。';
+  const supportGods = a.facts.items.filter(
+    (x) => ['正印', '偏印'].includes(x.god) && x.force >= 0.2,
+  );
+  const helpfulLuck = a.chart.luck
+    .filter((l) =>
+      [god(a.facts.dm, l.stem), ...HIDDEN[l.branch].map((s) => god(a.facts.dm, s))].some((g) =>
+        ['正印', '偏印'].includes(g),
+      ),
+    )
+    .slice(0, 3)
+    .map((l) => `${ageRange(a, l)}（${l.text}大運）`);
+  const benefactorType = supportGods.some((x) => x.god === '正印')
+    ? '較常是制度內的前輩、師長、主管或願意提供正式方法的人'
+    : supportGods.some((x) => x.god === '偏印')
+      ? '較常是有特殊經驗、能提供不同解法的專業人士'
+      : '較少由固定人物長期扶持，通常是在主動求助後才出現可用的協助';
+  return {
+    marriage,
+    marriageNote: disturbed
+      ? '關係進入承諾後，住處、時間分配或雙方家庭較容易成為磨合點；這不代表一定分開，而是需要提早談清楚。'
+      : '關係能否走到婚姻，關鍵在日常承諾是否持續做到，而不是只看一時熱度。',
+    child: `${childCount}；較有利於規劃懷孕、生子或擴大家庭的年齡窗口在${childAges || '成年中後期'}。這是傾向範圍，不是對實際生育結果的保證。`,
+    parents,
+    benefactor: `貴人運${supportGods.length >= 2 ? '較明顯' : supportGods.length ? '屬於有需要時才出現' : '不算固定'}，${benefactorType}。${helpfulLuck.length ? `較容易得到協助的階段包括${helpfulLuck.join('、')}。` : '與其等待別人主動幫忙，更適合先提出明確需求。'}`,
+  };
+}
 
 export function relationshipOverview(a) {
   const dayGod = a.chart.pillars[2].hidden[0].god;
@@ -88,9 +203,11 @@ export function relationshipCards(a, referenceYear) {
   const childGods = a.chart.pillars[3].hidden.map((x) => x.god);
   const expression = childGods.some((x) => ['食神', '傷官'].includes(x));
   const strict = childGods.some((x) => ['正官', '七殺', '比肩', '劫財'].includes(x));
+  const forecast = relationshipForecast(a);
   const cards = [
+    card('一 一生姻緣與婚姻時間', forecast.marriage, [forecast.marriageNote]),
     card(
-      '一 伴侶特質與相遇方式',
+      '二 伴侶特質與相遇方式',
       `${style[0]}。${independent ? '你願意承擔，但更適合能參與決定、也願意分擔的人。' : '對方能否尊重你的步調，比短時間的熱度更影響信任。'}`,
       [
         `${source}容易留下印象的對象，是在共同安排中表現可靠、願意回應，也有自己的生活方向的人。你較難長期接受只提出需要，卻把落實責任留給你的相處方式。`,
@@ -101,7 +218,7 @@ export function relationshipCards(a, referenceYear) {
       ],
     ),
     card(
-      '二 戀愛模式與反覆出現的關係問題',
+      '三 戀愛模式與反覆出現的關係問題',
       unsettled
         ? '感情容易在現實安排變動時進入磨合；壓力累積後才表達，比一開始沒有感情更容易造成距離。'
         : `關係較受日常互動影響，${style[1]}。`,
@@ -113,7 +230,7 @@ export function relationshipCards(a, referenceYear) {
       ],
     ),
     card(
-      '三 親密需求與相處契合度',
+      '四 親密需求與相處契合度',
       independent
         ? '你需要可靠的陪伴，也需要不被任意干預的自主空間；親近與尊重必須同時存在。'
         : `${style[0]}，相處節奏越能協調，越容易放下防備。`,
@@ -125,7 +242,7 @@ export function relationshipCards(a, referenceYear) {
       ],
     ),
     card(
-      '四 個人魅力與桃花表現',
+      '五 個人魅力與桃花表現',
       month
         ? '魅力較容易在熟悉的生活圈與實際互動中被看見，好感常從信任與默契累積。'
         : '魅力較需要在持續接觸中展現，個人態度與回應方式會決定好感能否延續。',
@@ -136,63 +253,14 @@ export function relationshipCards(a, referenceYear) {
         '桃花的發展重點在接近之後是否能持續互相回應。好感增加的年份，仍要分清一時互動熱絡、真正願意了解，以及能否共同安排生活這三個階段。',
       ],
     ),
-    card(
-      '五 子女緣與親子互動',
+    card('六 子女緣、數量與時間', forecast.child, [
       strict
-        ? '親子互動較重視責任、生活規律與孩子是否能逐步獨立，容易付出很多，也容易把期待放得較滿。'
-        : expression
-          ? '較容易透過陪伴、共同興趣與表達建立親子連結，但也需要容許孩子有自己的節奏。'
-          : '子女議題較著重時間與生活安排是否能承接，親子關係的品質取決於持續陪伴與清楚界線。',
-      [
-        strict
-          ? '若有子女，你可能先處理好生活與實際問題，希望孩子少走彎路；當孩子選擇不同做法時，也容易先想糾正。較適合把需要遵守的界線說清楚，其餘部分逐步交還孩子決定。'
-          : '若有子女，較能在共同活動與理解興趣中累積關係；安排過多時，仍可能讓原本的陪伴轉為催促，保留孩子能自主完成的空間較有幫助。',
-        '親子相處著重生活安排、照顧分工與教養互動；不指定子女數量、性別、懷孕或出生結果。',
-      ],
-    ),
+        ? '若有子女，你可能先處理好生活與實際問題，希望孩子少走彎路；當孩子選擇不同做法時，也容易先想糾正。較適合把需要遵守的界線說清楚，其餘部分逐步交還孩子決定。'
+        : '若有子女，較能在共同活動與理解興趣中累積關係；安排過多時，仍可能讓原本的陪伴轉為催促，保留孩子能自主完成的空間較有幫助。',
+      '親子相處著重生活安排、照顧分工與教養互動；不指定子女數量、性別、懷孕或出生結果。',
+    ]),
+    card('七 與父母的緣分', forecast.parents),
+    card('八 貴人運與容易幫助你的人', forecast.benefactor),
   ];
-  const intimacyBasis =
-    `日支本氣為${dayGod}，${dayActs.length ? '日支另見' + [...new Set(dayActs.map((x) => x.type))].join('、') : '日支未觸發合沖刑害'}；` +
-    (items.length
-      ? '配偶星見於' + items.slice(0, 3).map(carrierLabel).join('、')
-      : '配偶星未達可用承接門檻，對相遇方式保留判斷') +
-    '。';
-  cards[0].basis = intimacyBasis;
-  cards[1].basis = intimacyBasis;
-  const m = financialMechanisms(a.facts, a.strength);
-  const authority = m.wealthAuthority.length || m.authoritySupported.length;
-  const competing = m.peerDistribution.length;
-  const output = m.outputWealth.length && !m.outputSuppressed.length;
-  cards.push(
-    card(
-      '六 合作中的分工、承諾與決策權',
-      competing
-        ? '合作較需要先釐清資源與決策歸屬，再開始共同投入；只憑默契容易留下分配落差。'
-        : authority
-          ? '合作較適合清楚的責任、授權與履約方式，長期配合要讓承諾與可決定範圍相稱。'
-          : output
-            ? '合作較適合以可交付成果串接分工，再逐步建立長期配合。'
-            : '本局尚無足夠條件指定單一合作模式，先以範圍明確、可檢查完成情況的配合建立信任。',
-      [
-        competing
-          ? '分工宜分清誰投入、誰決定與誰取得成果；意見不同時，不以持續加碼投入換取認同。'
-          : output
-            ? '分工以成果及驗收界線為核心，讓交付的人能決定做法，新增需求另行確認。'
-            : '分工先限定可完成的範圍，不因一時熱絡就預設能長期共同承擔。',
-        authority
-          ? '承諾需有相應授權與資源；若只有責任增加而無決策權，宜重新確認範圍及回應期限。'
-          : '長期配合先看約定是否持續被履行，決策權依實際投入與責任協商，不預設某方應主導。',
-      ],
-      {
-        basis: competing
-          ? '非日主的比劫透干直接制財，觸發資源與分配邊界規則。'
-          : authority
-            ? '財官或官印具有位置接續，觸發責任與授權協調規則。'
-            : output
-              ? '食傷與財有接續且未觸發印制食傷，觸發成果分工規則。'
-              : '未觸發明確分財、財官或食傷生財接續，不指定合作身分或現況。',
-      },
-    ),
-  );
   return cards;
 }

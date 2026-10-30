@@ -39,27 +39,27 @@ function effectStory(a, ctx, x, slice) {
     const hitsPeer = affected.some((g) => ['比肩', '劫財'].includes(g)) || targets.includes(2);
     const hitsOutput = affected.some((g) => ['食神', '傷官'].includes(g));
     text = hitsWealth
-      ? `${area}涉及財星受制，需求或進帳即使增加，可調度的餘額仍可能受原有投入牽制。`
+      ? `${area}出現進帳或新機會時，部分款項仍可能先被成本與既定用途占用，需分清收入與真正能留下的錢。`
       : hitsOutput
-        ? `${area}涉及食傷受制，表達、創作或改變做法的空間較易被限制，需保留說明感受與完成個人安排的餘裕。`
+        ? `${area}較容易遇到做法受限、反覆修改或完成時間被壓縮，重要想法宜先整理成可執行的小步驟。`
         : hitsPeer
-          ? `${area}涉及比劫或日主受制，${ctx.capacity.state === '承格不足' ? '要求可能超過現有承載，須先接回支持。' : '自主空間會被收斂，能否有利取決於界線清楚且仍保有選擇。'}`
-          : `${area}涉及${[...new Set(affected)].join('、') || '天干'}受制，原有安排需要重新協調，不能直接等同整體運勢變差。`;
+          ? `${area}的自主空間變小，${ctx.capacity.state === '承格不足' ? '要求可能超過目前能負擔的程度，宜先減少同時進行的事情。' : '把責任與可決定的範圍一起談清楚，較不容易只剩配合。'}`
+          : `${area}的原有安排需要重新協調，先確認時間、責任與退出方式，不必把調整直接視為壞事。`;
   } else if (x.type === '三合三會')
-    text = `${area}出現更集中的投入方向，需確認新增氣勢能否接續本期${ctx.patterns.primary.name}；齊備只表示流向條件，不自動判為化局。`;
+    text = `${area}的投入方向變得集中，適合把力氣放在一兩項最重要的事情，避免其他生活面向同時失去彈性。`;
   else if (x.type === '天干合' || x.type === '地支合')
-    text = `${area}連結更緊，約定與資源較容易相互牽動；有助共同完成，也須防止等待與綁定使原有進度放慢。`;
+    text = `${area}的連結變緊，較容易形成共同安排；約定若不清楚，也可能因互相等待而拖慢進度。`;
   else return null;
   return {
     id: effectKey(x),
-    text: `${
+    text:
       slice.age < 18
         ? text
             .replace(/收入|進帳|收款/g, '可用資源')
             .replace(/需求/g, '學習需求')
             .replace(/工作壓力/g, '學習壓力')
-        : text
-    }（${source}形成${x.type}。）`,
+        : text,
+    evidence: `${source}形成${x.type}`,
     type: x.type,
     positions,
     rank: /沖|三刑/.test(x.type) ? 4 : x.type === '天干剋' ? 3 : 2,
@@ -82,7 +82,7 @@ export function periodThemes(a, p, slice) {
       id: 'disease:' + ctx.diagnosis.primary.id,
       semantic: 'disease',
       rank: 5,
-      text: `本年主要限制由「${background.diagnosis.primary.name}」轉為「${ctx.diagnosis.primary.name}」；${ctx.priority === null ? '先維持承接' : '優先保留' + ELEMENTS[ctx.priority] + '的救應條件'}。`,
+      text: `今年原本卡住的地方出現轉變，${ctx.priority === null ? '先維持目前能負擔的節奏' : `宜優先用${ELEMENTS[ctx.priority]}調整最明顯的失衡`}，不要同時擴大所有安排。`,
     });
   if (background)
     for (const event of events) {
@@ -185,7 +185,10 @@ export function composePeriod(a, p, slice) {
           }`
         : `與${label}${Number.isInteger(main.year) ? '立春所在大運' : '同一大運背景'}相比，主要作用相近，不將換年本身解讀為運勢轉折。`;
     };
-    adjacent = compare(prev, '前一年') + compare(next, '後一年');
+    const comparison = compare(prev, '前一年') + compare(next, '後一年');
+    adjacent = comparison.includes('主要作用相近')
+      ? '與前後一年相比，主要方向相近，今年以維持節奏為主。'
+      : '和前後一年相比，今年的變動較明顯，重要決定宜分段處理。';
   }
   const financialStory = financialPeriodStory(
     a,
@@ -204,7 +207,17 @@ export function composePeriod(a, p, slice) {
     summary: summary + adjacent,
     money,
     relation,
-    theme: events[0]?.type || (ctx.priority === E[main.stem] ? '救應與承接' : '延續與調整'),
+    theme:
+      {
+        天干剋: '壓力與調整',
+        地支沖: '變動與重整',
+        地支刑: '摩擦與修正',
+        地支害: '磨合與界線',
+        天干合: '連結與約定',
+        地支合: '連結與約定',
+        三刑: '壓力與重整',
+        三合三會: '集中與擴展',
+      }[events[0]?.type] || (ctx.priority === E[main.stem] ? '改善與承接' : '延續與調整'),
     domains: [CHANNELS[stem].focus, CHANNELS[branch].focus],
     features: [
       stem,

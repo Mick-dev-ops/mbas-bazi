@@ -127,22 +127,12 @@ it('無效夏令時間顯示可理解錯誤，不產出新命盤', () => {
   submit();
   expect(document.querySelector('#error').textContent).toContain('不存在');
 });
-it('下載只包含命主報告，不輸出內部分析與分數', async () => {
+it('工具列只保留匯出PDF與修改出生資料', () => {
   expect(JSON.parse(sessionStorage.getItem('mbas.birth.v1')).year).toBe('2001');
-  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-  document.querySelector('#export').click();
-  expect(URL.createObjectURL).toHaveBeenCalled();
-  expect(click).toHaveBeenCalled();
-  const blob = URL.createObjectURL.mock.calls.at(-1)[0];
-  const text = await new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsText(blob);
-  });
-  expect(text).not.toMatch(/"analysis"|"traces"|"decisionPath"|"score"|作用力|形成原因|成立條件/);
-  expect(JSON.parse(text).report.pages).toHaveLength(5);
-  click.mockRestore();
+  expect(document.querySelector('#export')).toBeNull();
+  expect(document.querySelector('.print-note')).toBeNull();
+  expect(document.querySelector('#print').textContent).toBe('匯出 PDF');
+  expect(document.querySelector('.report-tools').textContent).not.toContain('頁首及頁尾');
 });
 
 it('財運頁流年選擇保持在財運頁並更新結論', () => {

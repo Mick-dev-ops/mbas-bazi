@@ -280,7 +280,7 @@ export function financialPeriodStory(a, p, ctx, age, background = null) {
     focus: phase.focus,
     mechanisms: m,
     topics: selected,
-    text: lead + selected.map((x) => x.text + `（${x.evidence.join('；')}。）`).join(''),
+    text: lead + selected.map((x) => x.text).join(''),
   };
 }
 

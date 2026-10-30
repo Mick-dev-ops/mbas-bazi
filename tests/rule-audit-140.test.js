@@ -169,13 +169,14 @@ it('annual finance retains only current triggers and preserves the age context',
   const child = financialPeriodStory(a, p, ctx, 10, bg);
   expect(child.text).not.toMatch(/職務|收入|收款|履約|服務/);
 });
-it('public short evidence changes with the actual chart and cooperation is its own triggered section', () => {
+it('public relationship conclusions change with the chart and include family and benefactors', () => {
   const x = buildClientReports(a, 2026),
     y = buildClientReports(b, 2026);
   expect(x.pages[0].cards[0].basis).not.toBe(y.pages[0].cards[0].basis);
   expect(x.pages[0].cards[0].basis).toContain(a.patterns.primary.name);
-  expect(x.pages[2].cards[5].title).toContain('合作');
-  expect(x.pages[2].cards[5].basis).not.toBe(y.pages[2].cards[5].basis);
+  expect(x.pages[2].cards[0].conclusion).not.toBe(y.pages[2].cards[0].conclusion);
+  expect(x.pages[2].cards.some((c) => c.title.includes('父母'))).toBe(true);
+  expect(x.pages[2].cards.some((c) => c.title.includes('貴人'))).toBe(true);
   expect(JSON.stringify(x)).not.toMatch(/你已婚|你的太太|你有孩子/);
 });
 it('real annual context retains the year for neighboring-year comparison and boundary segments', () => {
@@ -183,6 +184,5 @@ it('real annual context retains the year for neighboring-year comparison and bou
   expect(annual.segments).toHaveLength(2);
   expect(annual.segments.every((p) => p.annual.year === 2024)).toBe(true);
   const s = composePeriod(a, annual.segments[1], { age: 30 });
-  expect(s.summary).toContain('前一年立春所在大運');
-  expect(s.summary).toContain('後一年立春所在大運');
+  expect(s.summary).toMatch(/前後一年|變動較明顯|維持節奏/);
 });

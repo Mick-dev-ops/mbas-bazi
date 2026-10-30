@@ -21,7 +21,7 @@ it('public reports and overview contain conclusions only; internal evidence is r
     r.pages.flatMap((p) => p.cards.map(renderCard)).join('') + chartOverview(a) + methodView();
   expect(html).not.toMatch(forbidden);
   expect(html).toContain('luck-calculation');
-  expect(html).toContain('命盤重點');
+  expect(html).not.toContain('命盤重點');
   expect(html).not.toContain('class="evidence"');
   expect(JSON.stringify(r)).not.toMatch(/"traces"|"decisionPath"|"score"|"pipeline"/);
   expect(a.trace).toBeTruthy();
@@ -99,7 +99,7 @@ it('stage boundaries use full local birthdays, handle leap birthdays, and preser
 it('relationships make direct character and interaction statements without teaching chart interpretation or assuming marriage', () => {
   const p = buildClientReports(a).pages[2];
   const t = JSON.stringify(p);
-  expect(p.cards[0].title).toBe('一 伴侶特質與相遇方式');
+  expect(p.cards[0].title).toBe('一 一生姻緣與婚姻時間');
   expect(t).not.toMatch(/命盤可以|你已婚|你的太太/);
   expect(p.cards.some((c) => c.title.includes('戀愛模式'))).toBe(true);
 });
@@ -149,27 +149,27 @@ it('four-pillar overview restores gods, stem/branch elements, hidden stems and a
     expect(html).toContain(t);
   expect(html).not.toMatch(forbidden);
 });
-it('relationship chapter ends after child section and removes the sixth window section', () => {
+it('relationship chapter gives marriage, child, parent and benefactor conclusions without cooperation content', () => {
   const p = buildClientReports(a, 2026).pages[2];
-  expect(p.cards).toHaveLength(6);
-  expect(p.cards[5].title).toContain('合作');
+  expect(p.cards).toHaveLength(8);
+  for (const title of ['婚姻時間', '子女緣、數量與時間', '父母', '貴人運'])
+    expect(p.cards.some((c) => c.title.includes(title))).toBe(true);
+  expect(JSON.stringify(p)).not.toContain('合作中的分工');
   expect(JSON.stringify(p)).not.toContain('近期姻緣、桃花與家庭窗口');
 });
-it('overall element order comes first and each element has independent overall and annual states', () => {
+it('overall element order comes first and each element integrates natal and annual guidance once', () => {
   const x = buildClientReports(a, 2025).pages[4],
     y = buildClientReports(a, 2026).pages[4];
   expect(x.overview.scope).toBe('overview');
   expect(x.cards[0].scope).toBe('annual');
   expect(x.overview.conclusion).toBe(y.overview.conclusion);
   for (const c of x.cards.filter((c) => c.element !== undefined)) {
-    expect(c.overall).toBeTruthy();
-    expect(c.annual.year).toBe(2025);
     const next = y.cards.find((v) => v.element === c.element);
-    expect(c.overall).toEqual(next.overall);
-    expect(c.annual.conclusion).not.toBe(next.annual.conclusion);
-    // Identical calculated effects may legitimately retain the same advice.
-    expect(c.annual.after.length).toBeGreaterThan(15);
+    expect(c.overall).toBeUndefined();
+    expect(c.annual).toBeUndefined();
+    expect(c.conclusion).not.toBe(next.conclusion);
+    expect(c.after.length).toBeGreaterThan(15);
     const html = renderCard(c);
-    expect(html.indexOf('整體運勢')).toBeLessThan(html.indexOf('今年運勢'));
+    expect(html).not.toMatch(/整體運勢|今年運勢/);
   }
 });

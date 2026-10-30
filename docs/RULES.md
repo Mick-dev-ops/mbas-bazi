@@ -190,4 +190,4 @@
 | USE-01                    | engine/remedies.js                  | engine.test.js：角色、順序、本命功能、原局依據                   |
 | LIFE-01、TXT-01、CHECK-01 | engine/analyze.js、report/build.js  | engine.test.js：確定性、差異性、五頁一致性、缺漏偵測             |
 | PER-01                    | engine/periods.js                   | engine.test.js：交運分段、年度切換、強弱變化、原局不變           |
-| UI呈現                    | ui/render.js、main.js               | ui.test.js：選單、導覽、展開、列印、下載、錯誤                   |
+| UI呈現                    | ui/render.js、main.js               | ui.test.js：選單、導覽、展開、PDF列印、手機四柱、錯誤            |
