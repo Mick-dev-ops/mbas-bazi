@@ -3,7 +3,7 @@ import { structureBasis, financeBasis } from './basis.js';
 import { financialMechanisms, financeConclusions } from '../engine/finance.js';
 import { functionalPractice } from './templates.js';
 import { solarTerms } from '../calendar/solar.js';
-import { relationshipCards } from './relationship.js';
+import { relationshipCards, relationshipOverview } from './relationship.js';
 import { composePeriod, currentElementReport, contextFor } from './period-story.js';
 import moment from 'moment-timezone/moment-timezone.js';
 import { ELEMENTS, STEM_ELEMENT, HIDDEN, god } from '../data/constants.js';
@@ -189,61 +189,26 @@ const ELEMENT_STATES = [
   },
 ];
 function elementCard(a, x) {
-  const relation = (x.element - a.facts.de + 5) % 5;
-  // Select consequences by natal role and rescue. Symbolic descriptions alone
-  // cannot determine what adding this element does to this person.
-  const states = [
-    [
-      '自主與人際界線不足，容易過度依賴他人，或不敢表明自己的安排。',
-      '較能自主生活，也能接受彼此分擔，既不全靠別人，也不把所有責任留給自己。',
-      '對方法與公平過度堅持，人際競爭、共同責任與支出容易增加。',
-    ],
-    [
-      '感受與能力留在心裡，別人不容易理解你真正想表達或分享的內容。',
-      '想法與感受較能表達，創作、分享與人際互動都有更自然的出口。',
-      '持續增加活動、表達與改動，卻沒有足夠時間沉澱；對別人的做法也容易過於挑剔。',
-    ],
-    [
-      '生活缺少流動與選擇，雖然付出不少，時間、金錢與感受之間仍容易有落差。',
-      '較能辨識適合自己的機會，時間、金錢與生活體驗有較清楚的對應。',
-      '同時接受太多邀約與機會，前期投入與後續承諾增加，最後忙碌多於可留下的餘裕。',
-    ],
-    [
-      '承諾與界線較模糊，容易配合到後來才發現責任超出原本意願。',
-      '生活規則與承諾較清楚，知道哪些需要負責、哪些可以拒絕，內在更安定。',
-      '規範、評價與自我要求過密，容易緊繃，關係也可能變成一方管束另一方。',
-    ],
-    [
-      '遇到陌生變化時缺少理解與支持，容易一邊擔心、一邊承受反覆試錯的負擔。',
-      '理解、休養與支持足以安定內在，學到的內容也能幫助自己作出選擇。',
-      '準備、擔心與照顧過多，生活反而停滯；也可能因依賴支持而維持原本不必要的負擔。',
-    ],
-  ][relation];
+  const practice = functionalPractice(a, x);
   const banned = x.roles.includes('主要忌神');
   const fav =
     x.roles.some((r) => ['核心用神', '先決用神', '相神', '輔助喜神'].includes(r)) && !banned;
-  const before = states[0];
-  const after = banned
-    ? `本命目前不適合繼續加強這個方向。若再增加，較容易出現：${states[2]}`
-    : fav
-      ? `${states[1]}原本較卡住的事情，會先從這個環節改善。`
-      : `這不是本命優先方向。適量時可能${states[1].replace(/[。；]$/, '')}，但不能取代目前最需要處理的問題。`;
   return card(
-    `${x.name}｜${x.roles.join('、')}`,
+    `${x.name}｜${banned ? '需要節制' : fav ? '優先調整' : '配合使用'}`,
     banned
-      ? '適合有限保留，不宜持續加強。'
+      ? `這個方向過多時會先影響${practice.area}，目前宜減量而不是繼續增加。`
       : fav
-        ? '可作為改善目前狀態的優先方向。'
-        : '依情境少量使用，優先度較後。',
+        ? `這是目前較值得先改善的生活環節，最先會反映在${practice.area}。`
+        : `這個方向可以適量保留，最先會反映在${practice.area}，但不是目前第一優先。`,
     [],
     {
       element: x.element,
-      before,
-      after,
-      under: states[0],
-      balanced: states[1],
-      over: states[2],
-      practice: functionalPractice(a, x).action,
+      before: practice.before,
+      after: practice.after,
+      under: practice.under,
+      balanced: practice.balanced,
+      over: practice.excess,
+      practice: `${practice.action} ${practice.check}`,
     },
   );
 }
@@ -341,6 +306,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
     ),
   ];
   const relations = relationshipCards(a, referenceYear);
+  const relationOverview = relationshipOverview(a);
   const periodCards = [
     card(
       '一 十年大運總覽',
@@ -421,47 +387,37 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const active =
     yearUses.find((x) => x.p.start <= Date.now() && Date.now() < x.p.end) || yearUses[0];
   const natalOrder = a.use.order.map((e) => ELEMENTS[e]).join(' > ');
+  const activePriority = active.use.order[0];
+  const activePractice = functionalPractice(a, a.use.elements[activePriority]);
   const elements = [
     card(
-      '一 整體五行取用總評',
-      `整體五行優先順序：${natalOrder}。`,
-      [
-        ...a.use.order.map((e) => {
-          const x = a.use.elements[e];
-          return `${x.name}（${x.roles.join('、')}）：${x.decisionPath[0]?.reason || '目前無直接救應依據，不主動增加'}。使用條件：${x.conditions[0].replace(/作用力\s*≥\.8/g, '有效承接').replace(/作用力須回到 \.5–2\.5/g, '作用須取得制化平衡')}。`;
-        }),
-        `成格所需相神功能：${a.use.patternAssistants.length ? a.use.patternAssistants.map((e) => ELEMENTS[e] + (e === a.use.core ? '（同時處理主病，主標籤列為核心用神）' : '')).join('、') : '目前未見可直接發用的承接'}；格神與救應角色分開判斷。`,
-        ...(a.use.tiedOrders.length
-          ? ['排序中同層候選採固定五行次序列示；同層之間未判定吉凶差距，主要取捨以角色及條件為準。']
-          : []),
-        `實際改善的操作次序：${a.use.operationOrder.map((e) => ELEMENTS[e]).join(' > ')}。${a.use.operationReason}`,
-      ],
-      { scope: 'overall' },
-    ),
-    card(
-      '二 今年大運流年與五行調整',
+      '一 今年大運流年與五行調整',
       `${referenceYear} 年 ${year.pillar.text}；${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}。今年優先順序：${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。`,
       [
-        active.use.summary,
-        ...yearUses.map(
-          (x) =>
-            `${date(a, x.p.start)} 至 ${date(a, x.p.end)}：${x.p.luck?.text || '起運前'}${x.p.luck ? '大運' : ''}，${x.use.order.map((e) => ELEMENTS[e]).join(' > ')}。${composePeriod(a, x.p, { age: ageAt(a, x.p.start), stage: stageOf(ageAt(a, x.p.start)) }).summary}`,
-        ),
+        `今年最先要照顧的是${activePractice.area}。${activePractice.action}`,
+        ...yearUses.map((x) => {
+          const e = x.use.order[0];
+          const p = functionalPractice(a, a.use.elements[e]);
+          return `${date(a, x.p.start)} 至 ${date(a, x.p.end)}：${x.p.luck?.text || '起運前'}${x.p.luck ? '大運' : ''}，優先調整${ELEMENTS[e]}。生活中先留意${p.area}；${p.action}`;
+        }),
       ],
       { scope: 'annual' },
     ),
     ...a.use.order.map((e) => {
       const base = elementCard(a, a.use.elements[e]),
-        growth = active.use.elements[e];
+        growth = active.use.elements[e],
+        practice = functionalPractice(a, a.use.elements[e]),
+        rank = active.use.order.indexOf(e),
+        isAvoid = a.use.elements[e].roles.includes('主要忌神');
       const annual = {
         year: referenceYear,
-        conclusion: `${referenceYear} 年的${growth.status}。${growth.current}`,
-        before: growth.current,
-        after: growth.growth,
-        under: growth.under,
-        balanced: growth.balanced,
-        over: growth.excess,
-        practice: growth.practice + ' ' + growth.condition,
+        conclusion: `${referenceYear} 年，${ELEMENTS[e]}在當期排序第 ${rank + 1}。${isAvoid ? '重點是避免這類狀態繼續增加。' : rank === 0 ? `它會先影響${practice.area}，是今年最優先的調整方向。` : `它會影響${practice.area}，適合配合當期第一順位使用。`}`,
+        before: isAvoid ? practice.excess : practice.under,
+        after: practice.after,
+        under: practice.under,
+        balanced: practice.balanced,
+        over: practice.excess,
+        practice: `${practice.action} ${practice.check}`,
       };
       return {
         ...base,
@@ -469,7 +425,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
         annual,
         periodAdjustments: (yearUses.length > 1 ? yearUses : []).map((x) => ({
           label: `${date(a, x.p.start)} 至 ${date(a, x.p.end)}・${x.p.luck?.text || '起運前'}・${year.pillar.text}`,
-          text: x.use.elements[e].growth + ' ' + x.use.elements[e].condition,
+          text: `${ELEMENTS[e]}在這段期間排序第 ${x.use.order.indexOf(e) + 1}；${x.use.order[0] === e ? practice.action : `先維持${practice.balanced}，不必一次增加太多。`}`,
         })),
       };
     }),
@@ -509,22 +465,15 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       mechanisms.income === 'output-chain'
         ? '賺錢主線以可持續交付的專業為重，財富累積的關鍵在把報酬實際留下，而非只增加事情與工時。'
         : moneyResult.income,
+      `實際生活裡，${moneyResult.retention}${moneyResult.expense}`,
       favorableAdults.length
         ? `已列大運中，較有專業接到需求條件的階段包括${favorableAdults.slice(0, 3).join('、')}；仍須同時核對各段的資金占用與支出。`
         : '已列大運尚未出現足以單獨指定收入明顯開展階段的完整接續；各階段先按實際承接與收支變化判斷。',
     ]),
-    card(
-      '緣分總評',
-      a.action.effects.some((x) => /沖|刑|害/.test(x.type) && x.positions.includes(2))
-        ? '感情的長期課題較在共同生活的變動與磨合，承諾能否持續落實，比一時熱度更影響穩定。'
-        : a.strength.concentrated
-          ? '長期關係需要親近與自主兼顧，既要互相回應，也要保留各自決定與參與的空間。'
-          : '關係較重視可靠的回應與支持，能持續理解彼此步調，較有條件讓好感轉為穩定陪伴。',
-      [
-        relations[1].conclusion,
-        `親子互動方面，${relations[4].conclusion}合作方面，${relations[5].conclusion}`,
-      ],
-    ),
+    card('緣分總評', relationOverview.conclusion, [
+      ...relationOverview.paragraphs,
+      `親子互動方面，${relations[4].conclusion}合作方面，${relations[5].conclusion}`,
+    ]),
     card(
       '大運流年總評',
       a.worldRule +
@@ -543,10 +492,10 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
     ),
     card(
       '五行取用總評',
-      `原局以${a.use.core === null ? '維持現有結構承接' : ELEMENTS[a.use.core] + '處理核心限制'}為主；整體順序：${natalOrder}。`,
+      `整體優先順序：${natalOrder}。第一順位的${ELEMENTS[a.use.order[0]]}，最先要改善的是${functionalPractice(a, a.use.elements[a.use.order[0]]).area}。`,
       [
-        `實際操作順序：${a.use.operationOrder.map((e) => ELEMENTS[e]).join(' > ')}。${a.use.operationReason}`,
-        `${referenceYear} 年${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}，當期順序：${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。原局需要與當期需求分開判斷。`,
+        `實際調整時依序為${a.use.operationOrder.map((e) => ELEMENTS[e]).join(' > ')}。先做的是：${functionalPractice(a, a.use.elements[a.use.operationOrder[0]]).action}`,
+        `${referenceYear} 年處於${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}，當期順序改為${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。今年先觀察${activePractice.area}，具體狀態與做法列在下方。`,
       ],
     ),
   ];

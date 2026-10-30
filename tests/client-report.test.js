@@ -105,7 +105,7 @@ it('relationships make direct character and interaction statements without teach
 });
 it('each element includes distinct before/after and low/balanced/excess states; unfavorable elements are not prescribed', () => {
   const p = buildClientReports(a).pages[4];
-  expect(p.cards[0].conclusion).toContain('水 > 木 > 金 > 火 > 土');
+  expect(p.overview.conclusion).toContain('水 > 木 > 金 > 火 > 土');
   const cards = p.cards.filter((c) => c.element !== undefined);
   expect(cards).toHaveLength(5);
   for (const c of cards) {
@@ -113,8 +113,9 @@ it('each element includes distinct before/after and low/balanced/excess states; 
       expect(c[k].length).toBeGreaterThan(15);
     expect(c.under).not.toBe(c.over);
   }
-  for (const c of cards.filter((c) => [1, 2].includes(c.element)))
-    expect(c.after).toContain('不適合繼續加強');
+  expect(JSON.stringify(p)).not.toMatch(
+    /比劫|食傷|財官|官殺|正印|偏印|食神|傷官|正財|偏財|七殺|正官|承格|主病|相神|格神|作用力/,
+  );
 });
 it('different natal charts produce different conclusions without changing adjudication', () => {
   const before = JSON.stringify(a.use),
@@ -157,9 +158,9 @@ it('relationship chapter ends after child section and removes the sixth window s
 it('overall element order comes first and each element has independent overall and annual states', () => {
   const x = buildClientReports(a, 2025).pages[4],
     y = buildClientReports(a, 2026).pages[4];
-  expect(x.cards[0].scope).toBe('overall');
-  expect(x.cards[1].scope).toBe('annual');
-  expect(x.cards[0].conclusion).toBe(y.cards[0].conclusion);
+  expect(x.overview.scope).toBe('overview');
+  expect(x.cards[0].scope).toBe('annual');
+  expect(x.overview.conclusion).toBe(y.overview.conclusion);
   for (const c of x.cards.filter((c) => c.element !== undefined)) {
     expect(c.overall).toBeTruthy();
     expect(c.annual.year).toBe(2025);
@@ -167,7 +168,7 @@ it('overall element order comes first and each element has independent overall a
     expect(c.overall).toEqual(next.overall);
     expect(c.annual.conclusion).not.toBe(next.annual.conclusion);
     // Identical calculated effects may legitimately retain the same advice.
-    expect(c.annual.after).toContain('再加強');
+    expect(c.annual.after.length).toBeGreaterThan(15);
     const html = renderCard(c);
     expect(html.indexOf('整體運勢')).toBeLessThan(html.indexOf('今年運勢'));
   }

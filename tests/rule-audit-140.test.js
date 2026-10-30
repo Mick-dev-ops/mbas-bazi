@@ -63,8 +63,8 @@ it('classification, structural identity and practical operation order stay disti
   expect(a.use.elements[3].structuralIdentity).toBe('格神');
   expect(a.use.order).not.toEqual(a.use.operationOrder);
   expect([...a.use.order].sort()).toEqual([...a.use.operationOrder].sort());
-  const text = buildClientReports(a, 2026).pages[4].cards[0].paragraphs.join('');
-  expect(text).toContain('操作次序');
+  const text = buildClientReports(a, 2026).pages[4].overview.paragraphs.join('');
+  expect(text).toContain('實際調整');
   expect(text).not.toMatch(/作用力|\.8|分數/);
 });
 it('numerous peers without actual wealth control do not trigger distribution', () => {

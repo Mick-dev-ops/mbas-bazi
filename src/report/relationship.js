@@ -33,6 +33,37 @@ const dayStyles = {
     '感受複雜時較容易先退回自己的空間，對方可能把慢熱理解為疏離',
   ],
 };
+
+export function relationshipOverview(a) {
+  const dayGod = a.chart.pillars[2].hidden[0].god;
+  const style = dayStyles[dayGod];
+  const spouse = a.chart.birth.sex === '男' ? ['正財', '偏財'] : ['正官', '七殺'];
+  const positions = new Set(
+    a.facts.items.filter((x) => spouse.includes(x.god) && x.force >= 0.2).map((x) => x.position),
+  );
+  const unsettled = a.action.effects.some(
+    (x) => /沖|刑|害/.test(x.type) && x.positions.includes(2),
+  );
+  const meeting = positions.has(1)
+    ? '好感較常在固定往來中累積，先看見對方如何回應日常，再決定是否更靠近'
+    : positions.has(0)
+      ? '熟人圈與既有往來較容易帶來接近機會，但你通常仍會觀察一段時間才真正投入'
+      : positions.has(3)
+        ? '共同興趣、未來安排或持續照顧一件事，較容易讓關係由熟悉走向親近'
+        : '單次熱絡不太足夠，關係需要靠多次一致的回應才會形成信任';
+  const rhythm = unsettled
+    ? '一旦住處、時間或家人安排改變，原本沒說清楚的需要很快會浮現；越早談分工與空間，越不容易在疲累後突然拉開距離'
+    : a.strength.concentrated
+      ? '你可以很投入，也需要保有自己的決定方式；最合適的親密不是完全綁在一起，而是彼此可靠又能各自作主'
+      : `真正相處後，${style[1]}；把小事中的期待提早說明，比要求對方自己領會更能維持親近`;
+  return {
+    conclusion: `你在關係裡${style[0]}；${meeting}。`,
+    paragraphs: [
+      rhythm + '。',
+      '判斷緣分是否適合長久，不只看吸引力，也看對方是否持續回應、尊重界線、參與共同安排，並願意對自己的選擇負責。',
+    ],
+  };
+}
 export function relationshipCards(a, referenceYear) {
   const spouse = a.chart.birth.sex === '男' ? ['正財', '偏財'] : ['正官', '七殺'];
   const items = a.facts.items.filter((x) => spouse.includes(x.god) && x.force >= 0.2);

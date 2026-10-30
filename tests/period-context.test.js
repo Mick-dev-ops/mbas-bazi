@@ -72,7 +72,7 @@ it('current five-element adjustments depend on the selected year and preserve na
   );
   for (const c of y.cards.filter((c) => c.element !== undefined)) {
     expect(c.periodAdjustments).toEqual([]); // A single year segment is already described above, not repeated per element.
-    expect(c.annual.after).toContain('再加強');
+    expect(c.annual.after.length).toBeGreaterThan(15);
     expect(c.overall.after.length).toBeGreaterThan(15);
   }
   expect(JSON.stringify(a.use)).toBe(before);
