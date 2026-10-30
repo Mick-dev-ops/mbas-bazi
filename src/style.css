@@ -763,13 +763,49 @@ th {
   border-top: 1px solid #d9dfd7;
 }
 @media (max-width: 540px) {
+  .overview {
+    padding: 12px;
+  }
   .pillars {
-    grid-template-columns: repeat(4, minmax(145px, 1fr));
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    margin: 18px 0;
+    overflow: visible;
   }
   .pillar {
-    scroll-snap-align: start;
+    min-width: 0;
+    padding: 10px 2px;
+  }
+  .pillar > span {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .pillar .god {
+    min-height: 2.7em;
+    margin: 6px 1px;
+    font-size: 9px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .pillar .han {
+    font-size: 30px;
+    line-height: 1.4;
+  }
+  .pillar-meta,
+  .pillar > p:last-child {
+    font-size: 9px;
+    line-height: 1.55;
+  }
+  .pillar h4 {
+    margin: 12px 0 6px;
+    font-size: 10px;
+  }
+  .pillar-hidden {
+    font-size: 9px;
+    line-height: 1.55;
+  }
+  .pillar-hidden li {
+    margin: 7px 0;
   }
 }
 
