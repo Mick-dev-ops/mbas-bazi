@@ -302,15 +302,14 @@ const ELEMENT_STATES = [
 function elementCard(a, x) {
   const practice = functionalPractice(a, x);
   const banned = x.roles.includes('主要忌神');
-  const fav =
-    x.roles.some((r) => ['核心用神', '先決用神', '相神', '輔助喜神'].includes(r)) && !banned;
+  const natalRank = a.use.order.indexOf(x.element);
   return card(
-    `${x.name}｜${banned ? '需要節制' : fav ? '優先調整' : '配合使用'}`,
+    `${x.name}｜整體第 ${natalRank + 1} 順位`,
     banned
-      ? `這個方向過多時會先影響${practice.area}，目前宜減量而不是繼續增加。`
-      : fav
-        ? `這是目前較值得先改善的生活環節，最先會反映在${practice.area}。`
-        : `這個方向可以適量保留，最先會反映在${practice.area}，但不是目前第一優先。`,
+      ? `整體排序第 ${natalRank + 1}，這個方向過多時會先影響${practice.area}，宜減量而不是繼續增加。`
+      : natalRank === 0
+        ? `整體第一順位，最先要改善的是${practice.area}。`
+        : `整體排序第 ${natalRank + 1}，主要影響${practice.area}；先完成前面順位的調整，再使用這個方向。`,
     [],
     {
       element: x.element,
@@ -519,15 +518,23 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       ],
       { scope: 'annual' },
     ),
-    ...a.use.order.map((e) => {
+    ...active.use.order.map((e) => {
       const base = elementCard(a, a.use.elements[e]),
-        growth = active.use.elements[e],
         practice = functionalPractice(a, a.use.elements[e]),
         rank = active.use.order.indexOf(e),
         isAvoid = a.use.elements[e].roles.includes('主要忌神');
+      const currentGuidance = isAvoid
+        ? `排第 ${rank + 1}，重點是節制，不主動增加。`
+        : rank === 0
+          ? `排第 1，是唯一需要優先處理的方向；先改善${practice.area}。`
+          : rank === 1
+            ? `排第 2，等第一順位開始穩定後，再用來改善${practice.area}。`
+            : rank === 2
+              ? `排第 3，屬於後續配合項目；前兩順位未穩定前，不需先增加。`
+              : `排第 ${rank + 1}，不是當期主動加強項目，維持基本功能即可。`;
       const annual = {
         year: referenceYear,
-        conclusion: `${referenceYear} 年，${ELEMENTS[e]}在當期排序第 ${rank + 1}。${isAvoid ? '重點是避免這類狀態繼續增加。' : rank === 0 ? `它會先影響${practice.area}，是今年最優先的調整方向。` : `它會影響${practice.area}，適合配合當期第一順位使用。`}`,
+        conclusion: `${referenceYear} 年當期${currentGuidance}`,
         before: isAvoid ? practice.excess : practice.under,
         after: practice.after,
         under: practice.under,
@@ -537,7 +544,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       };
       return {
         ...base,
-        title: `${ELEMENTS[e]}｜${isAvoid ? '今年宜節制' : rank === 0 ? '今年優先調整' : '今年配合使用'}`,
+        title: `${ELEMENTS[e]}｜${isAvoid ? `今年第 ${rank + 1} 順位・宜節制` : rank === 0 ? '今年第 1 順位・優先調整' : rank === 1 ? '今年第 2 順位・配合使用' : `今年第 ${rank + 1} 順位・後續使用`}`,
         conclusion: `${base.conclusion}${annual.conclusion}`,
         before: annual.before,
         after: annual.after,

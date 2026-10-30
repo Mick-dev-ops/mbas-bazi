@@ -234,7 +234,7 @@ export function functionalPractice(a, x) {
     area: r.area,
     ability: prohibited
       ? `這個方向目前偏多會放大生活耗損，先減量比繼續增加更有幫助。${load}`
-      : `${favorable ? '這是目前較值得優先改善的生活環節。' : '這個方向可以配合使用，但不是第一優先。'}${load}`,
+      : `${favorable ? `這個方向有助於改善「${r.area}」，實際先後順序以報告中的五行排序為準。` : '這個方向可以配合使用，但不需要優先增加。'}${load}`,
     resources: prohibited
       ? `不必主動擴大這類安排；只保留生活必要的${r.resources}。`
       : `可優先尋找${r.resources}。`,

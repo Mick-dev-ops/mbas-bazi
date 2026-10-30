@@ -173,3 +173,16 @@ it('overall element order comes first and each element integrates natal and annu
     expect(html).not.toMatch(/整體運勢|今年運勢/);
   }
 });
+it('five-element cards expose one current priority and explicit ranks without shared priority wording', () => {
+  const cards = buildClientReports(a, 2026).pages[4].cards.filter((c) => c.element !== undefined);
+  expect(cards.map((c) => c.title.match(/今年第 (\d) 順位/)?.[1])).toEqual([
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+  ]);
+  expect(cards.filter((c) => c.title.includes('優先調整'))).toHaveLength(1);
+  expect(cards[0].conclusion).toContain('唯一需要優先處理');
+  expect(cards.slice(1).every((c) => !c.conclusion.includes('較值得先改善'))).toBe(true);
+});
