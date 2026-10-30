@@ -272,6 +272,29 @@ footer span {
   line-height: 2;
   color: #717b6d;
 }
+.ziping-reading {
+  margin: 0 0 30px;
+  padding: 24px 26px;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--gold);
+  background: rgba(255, 255, 255, 0.42);
+}
+.ziping-reading h3 {
+  margin: 8px 0 14px;
+  color: var(--green);
+}
+.ziping-reading p {
+  margin: 10px 0;
+  line-height: 1.85;
+}
+.ziping-reading .ziping-method {
+  font-weight: 600;
+}
+.ziping-reading .ziping-note {
+  margin-top: 16px;
+  color: #798276;
+  font-size: 12px;
+}
 .term-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -837,6 +860,9 @@ th {
   .pillar-hidden li {
     margin: 0;
   }
+  .ziping-reading {
+    padding: 18px 16px;
+  }
 }
 
 .chart-basis {
@@ -905,6 +931,9 @@ th {
   #print-report .pillars {
     grid-template-columns: repeat(4, 1fr);
     margin: 16px 0;
+  }
+  #print-report .ziping-reading {
+    break-inside: avoid;
   }
   #print-report .element-steps {
     display: block;

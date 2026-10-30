@@ -5,6 +5,7 @@ import { flowAnalysis } from './flow.js';
 import { climateAnalysis, diagnose, adjudicate } from './remedies.js';
 import { VERSION, GODS, ELEMENTS } from '../data/constants.js';
 import { trace } from '../data/rules.js';
+import { zipingReading } from './ziping.js';
 export function stableId(s) {
   let h = 2166136261;
   for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
@@ -19,6 +20,7 @@ export function analyze(chart) {
   const provisional = diagnose(facts, { state: '待評承格' }, structural, { barriers: [] });
   const strength = capacity(facts);
   const patterns = judgePatterns(facts, strength, chart);
+  const ziping = zipingReading(chart);
   const flow = flowAnalysis(facts, patterns);
   const climate = climateAnalysis(facts);
   const diagnosis = diagnose(facts, strength, patterns, flow);
@@ -75,6 +77,7 @@ export function analyze(chart) {
     facts,
     strength,
     patterns,
+    ziping,
     flow,
     climate,
     diagnosis,

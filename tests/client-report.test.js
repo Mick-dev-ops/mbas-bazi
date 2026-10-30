@@ -149,6 +149,17 @@ it('four-pillar overview restores gods, stem/branch elements, hidden stems and a
     expect(html).toContain(t);
   expect(html).not.toMatch(forbidden);
 });
+it('four-pillar overview adds a chart-specific Zi Ping month-command reading', () => {
+  const html = chartOverview(a);
+  expect(a.chart.pillars.map((p) => p.text)).toEqual(['甲戌', '壬申', '戊辰', '己未']);
+  expect(html).toContain('月令格局解讀');
+  expect(html).toContain('偏財格');
+  expect(html).toContain('食神生財之源');
+  expect(html).toContain('年干甲七殺');
+  expect(html).toContain('時干己劫財');
+  expect(html).toContain('誰完成、誰承擔、誰決定及如何分配');
+  expect(html).not.toMatch(/作用力|聚合力量|條件通過|裁決依據/);
+});
 it('relationship chapter gives marriage, child, parent and benefactor conclusions without cooperation content', () => {
   const p = buildClientReports(a, 2026).pages[2];
   expect(p.cards).toHaveLength(8);
