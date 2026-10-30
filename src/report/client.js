@@ -3,7 +3,7 @@ import { structureBasis, financeBasis } from './basis.js';
 import { financialMechanisms, financeConclusions } from '../engine/finance.js';
 import { functionalPractice } from './templates.js';
 import { solarTerms } from '../calendar/solar.js';
-import { relationshipCards } from './relationship.js';
+import { relationshipCards, relationshipOverview } from './relationship.js';
 import { composePeriod, currentElementReport, contextFor } from './period-story.js';
 import moment from 'moment-timezone/moment-timezone.js';
 import { ELEMENTS, STEM_ELEMENT, HIDDEN, god } from '../data/constants.js';
@@ -417,6 +417,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
     ),
   ];
   const relations = relationshipCards(a, referenceYear);
+  const relationOverview = relationshipOverview(a);
   const periodCards = [
     card(
       '一 十年大運總覽',
@@ -591,7 +592,8 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
         ? `已列大運中，較有專業接到需求條件的階段包括${favorableAdults.slice(0, 3).join('、')}；仍須同時核對各段的資金占用與支出。`
         : '已列大運尚未出現足以單獨指定收入明顯開展階段的完整接續；各階段先按實際承接與收支變化判斷。',
     ]),
-    card('緣分總評', relations[0].conclusion, [
+    card('緣分總評', `${compact(relations[0].conclusion, 1)}${relationOverview.conclusion}`, [
+      ...relationOverview.paragraphs,
       relations[0].paragraphs[0],
       `子女方面，${relations[5].conclusion}`,
       `父母方面，${relations[6].conclusion}貴人方面，${relations[7].conclusion}`,
