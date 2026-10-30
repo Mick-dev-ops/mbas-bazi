@@ -162,11 +162,22 @@ it('four-pillar overview adds a chart-specific Zi Ping month-command reading', (
 });
 it('relationship chapter gives marriage, child, parent and benefactor conclusions without cooperation content', () => {
   const p = buildClientReports(a, 2026).pages[2];
-  expect(p.cards).toHaveLength(8);
+  expect(p.cards).toHaveLength(10);
   for (const title of ['婚姻時間', '子女緣、數量與時間', '父母', '貴人運'])
     expect(p.cards.some((c) => c.title.includes(title))).toBe(true);
   expect(JSON.stringify(p)).not.toContain('合作中的分工');
   expect(JSON.stringify(p)).not.toContain('近期姻緣、桃花與家庭窗口');
+  const timeline = p.cards.find((c) => c.title.includes('貴人運時間表'));
+  expect(timeline.table.headers).toEqual([
+    '年份',
+    '約略年齡',
+    '大運',
+    '人物類型',
+    '觸發依據',
+    '主要限制',
+  ]);
+  expect(timeline.table.rows.length).toBeGreaterThan(0);
+  expect(JSON.stringify(p)).toContain('此盤無法可靠判定貴人性別');
 });
 it('overall element order comes first and each element integrates natal and annual guidance once', () => {
   const x = buildClientReports(a, 2025).pages[4],

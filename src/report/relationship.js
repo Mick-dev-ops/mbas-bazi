@@ -1,5 +1,6 @@
 import { annualReport } from '../engine/periods.js';
 import { HIDDEN, god } from '../data/constants.js';
+import { benefactorTimeline } from '../engine/benefactors.js';
 const card = (title, conclusion, paragraphs = [], extra = {}) => ({
   title,
   conclusion,
@@ -34,11 +35,6 @@ const dayStyles = {
   ],
 };
 
-const ageRange = (a, luck) => {
-  const from = Math.max(0, new Date(luck.start).getUTCFullYear() - a.chart.birth.year);
-  const to = Math.max(from, new Date(luck.end - 1).getUTCFullYear() - a.chart.birth.year);
-  return from === to ? `${from}歲` : `${from}–${to}歲`;
-};
 const mergeAges = (ages) => {
   const sorted = [...new Set(ages)].sort((a, b) => a - b);
   const groups = [];
@@ -122,22 +118,6 @@ function relationshipForecast(a) {
     : parentSupport >= 0.8
       ? '父母緣與家庭支持較明顯，遇到重要轉折時通常有人願意提供意見或實際協助；需要注意的是，關心有時也會變成介入。'
       : '與父母的緣分偏向各自承擔，不一定常把感受說出口。關係要靠固定聯絡與具體照顧維持，而不是期待彼此自然理解。';
-  const supportGods = a.facts.items.filter(
-    (x) => ['正印', '偏印'].includes(x.god) && x.force >= 0.2,
-  );
-  const helpfulLuck = a.chart.luck
-    .filter((l) =>
-      [god(a.facts.dm, l.stem), ...HIDDEN[l.branch].map((s) => god(a.facts.dm, s))].some((g) =>
-        ['正印', '偏印'].includes(g),
-      ),
-    )
-    .slice(0, 3)
-    .map((l) => `${ageRange(a, l)}（${l.text}大運）`);
-  const benefactorType = supportGods.some((x) => x.god === '正印')
-    ? '較常是制度內的前輩、師長、主管或願意提供正式方法的人'
-    : supportGods.some((x) => x.god === '偏印')
-      ? '較常是有特殊經驗、能提供不同解法的專業人士'
-      : '較少由固定人物長期扶持，通常是在主動求助後才出現可用的協助';
   return {
     marriage,
     marriageNote: disturbed
@@ -145,7 +125,6 @@ function relationshipForecast(a) {
       : '關係能否走到婚姻，關鍵在日常承諾是否持續做到，而不是只看一時熱度。',
     child: `${childCount}；較有利於規劃懷孕、生子或擴大家庭的年齡窗口在${childAges || '成年中後期'}。這是傾向範圍，不是對實際生育結果的保證。`,
     parents,
-    benefactor: `貴人運${supportGods.length >= 2 ? '較明顯' : supportGods.length ? '屬於有需要時才出現' : '不算固定'}，${benefactorType}。${helpfulLuck.length ? `較容易得到協助的階段包括${helpfulLuck.join('、')}。` : '與其等待別人主動幫忙，更適合先提出明確需求。'}`,
   };
 }
 
@@ -204,6 +183,8 @@ export function relationshipCards(a, referenceYear) {
   const expression = childGods.some((x) => ['食神', '傷官'].includes(x));
   const strict = childGods.some((x) => ['正官', '七殺', '比肩', '劫財'].includes(x));
   const forecast = relationshipForecast(a);
+  const benefactors = a.benefactors;
+  const benefactorYears = benefactorTimeline(a);
   const cards = [
     card('一 一生姻緣與婚姻時間', forecast.marriage, [forecast.marriageNote]),
     card(
@@ -260,7 +241,41 @@ export function relationshipCards(a, referenceYear) {
       '親子相處著重生活安排、照顧分工與教養互動；不指定子女數量、性別、懷孕或出生結果。',
     ]),
     card('七 與父母的緣分', forecast.parents),
-    card('八 貴人運與容易幫助你的人', forecast.benefactor),
+    card('八 貴人運整體判斷', benefactors.overall, [
+      benefactors.tianyi.summary,
+      `簡短依據：${benefactors.roles.map((x) => `${x.god}—${x.basis}`).join('；')}。`,
+    ]),
+    card(
+      '九 容易幫助你的人與辨認方式',
+      `最值得辨認的是${benefactors.roles[0].person}。真正的支持會帶來可使用的方法、權限、條件或實際分擔，而不只是更多要求。`,
+      [
+        ...benefactors.roles.map(
+          (x) =>
+            `${x.label}（${x.god}）：${x.person}，通常會${x.help}。辨認方式：${x.real}；若是${x.false}，就不列為有力貴人。依據：${x.basis}。`,
+        ),
+        benefactors.gender,
+      ],
+    ),
+    card(
+      '十 貴人運時間表',
+      benefactorYears.length
+        ? '以下是原局、大運與流年條件同時較完整的年份，依助力強度排序；它們代表較容易出現支持的窗口，不保證事件必然發生。'
+        : '目前沒有同時通過原局需要、歲運引動與承接條件的明顯年份，不宜只因出現印星、官星或天乙就指定貴人年。',
+      [],
+      {
+        table: {
+          headers: ['年份', '約略年齡', '大運', '人物類型', '觸發依據', '主要限制'],
+          rows: benefactorYears.map((x) => [
+            `${x.year}年 ${x.pillar}`,
+            `${x.age}歲前後`,
+            x.luck === '起運前' ? x.luck : `${x.luck}大運`,
+            `${x.role}：${x.stage}`,
+            x.basis,
+            x.limitation,
+          ]),
+        },
+      },
+    ),
   ];
   return cards;
 }

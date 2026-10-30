@@ -6,6 +6,7 @@ import { climateAnalysis, diagnose, adjudicate } from './remedies.js';
 import { VERSION, GODS, ELEMENTS } from '../data/constants.js';
 import { trace } from '../data/rules.js';
 import { zipingReading } from './ziping.js';
+import { analyzeBenefactors } from './benefactors.js';
 export function stableId(s) {
   let h = 2166136261;
   for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
@@ -66,7 +67,7 @@ export function analyze(chart) {
       versions: chart.versions,
     }),
   );
-  return {
+  const analysis = {
     id,
     pipeline,
     worldRule,
@@ -91,4 +92,6 @@ export function analyze(chart) {
       mainline,
     ),
   };
+  analysis.benefactors = analyzeBenefactors(analysis);
+  return analysis;
 }
