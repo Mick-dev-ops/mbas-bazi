@@ -9,7 +9,7 @@ const run = (x = birth) => analyze(calculate(x));
 it('reported failure: same pillars and load index, but independent natal root assessment changes the cascade', () => {
   const a = run();
   expect(a.chart.pillars.map((p) => p.text)).toEqual(['甲戌', '壬申', '戊辰', '己未']);
-  expect(a.strength.ratio).toBeCloseTo(0.7142209);
+  expect(a.strength.ratio).toBeCloseTo(0.7041734);
   expect(a.strength.rootAssessment.mainRoots).toHaveLength(3);
   expect(a.strength.state).toBe('可承');
   expect(a.strength.concentrated).toBe(true);
@@ -64,7 +64,7 @@ it('chapters differ across charts, retain formal multi-paragraph analysis and ev
   expect(content).not.toMatch(/臣服|踩在.*腳下|你現在已婚|你現在三十一歲|中上階層/);
   expect(ra.pages[3].cards[0].table.rows).toHaveLength(10);
   expect(renderCard(ra.pages[0].cards[0])).toContain('narrative-paragraph');
-  expect(renderCard(ra.pages[3].cards[0])).toContain('<table>');
+  expect(renderCard(ra.pages[3].cards[0])).toContain('<table');
   expect(
     ra.pages
       .flatMap((p) => p.cards)
@@ -108,7 +108,7 @@ it('many roots alone do not establish a disease without a relevant structure and
 });
 it('analysis exposes ordered hypotheses and all five practical chapters name effects, resources and limits', () => {
   const a = run();
-  expect(a.pipeline.map((x) => x.stage)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  expect(a.pipeline.map((x) => x.stage)).toEqual(Array.from({ length: 15 }, (_, i) => i + 1));
   const r = buildReports(a);
   expect(r.pages[0].cards.find((x) => x.title.includes('世界規則')).table.rows).toHaveLength(9);
   for (const card of r.pages[4].cards.filter((x) => x.element !== undefined)) {

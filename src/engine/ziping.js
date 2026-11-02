@@ -163,8 +163,9 @@ function keySentence(chart, identity) {
   return `此格的發揮關鍵，是${key || '讓月令所主的力量有清楚出口，並使責任、行動與結果彼此一致。'}`;
 }
 
-export function zipingReading(chart) {
+export function zipingReading(chart, patterns = null) {
   const identity = patternIdentity(chart);
+  if (patterns?.structureName) identity.name = patterns.structureName;
   const links = featureLines(chart, identity);
   return {
     title: '月令格局解讀',

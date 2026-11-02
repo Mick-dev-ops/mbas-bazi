@@ -129,6 +129,44 @@ const PRESSURE_SCENE = {
   },
 };
 
+const PRESSURE_VARIANTS = {
+  'wealth-channel': [
+    '先保留自己的時間與可用資源，再選擇值得投入的部分',
+    '檢查每次付出後，是否仍有餘裕照顧自己的生活',
+    '把投入上限、可得回應與停止條件說清楚',
+  ],
+  capacity: [
+    '先縮小同時進行的範圍，再接回休息與可靠支援',
+    '檢查新增安排是否已超過身心能恢復的程度',
+    '把能移交、能延後與必須求助的部分分開處理',
+  ],
+  assistant: [
+    '先建立可重複使用的方法，也讓可靠的人參與接續',
+    '檢查變動出現時，是否仍有能沿用的做法與協助',
+    '把關鍵步驟留下紀錄，並明確交給能完成下一步的人',
+  ],
+  owl: [
+    '準備到足以開始便做一個小嘗試',
+    '檢查查證是否真的讓生活前進，而不是延後決定',
+    '替蒐集資訊設定期限，期限到就用實際結果修正',
+  ],
+  officer: [
+    '先分清合理責任與只是害怕被否定的配合',
+    '檢查規則是否保護生活，還是只讓自己不敢表達',
+    '把不同意見連同替代做法與可承擔範圍一起提出',
+  ],
+  wealth: [
+    '只保留願意長期交換時間的人事物',
+    '檢查每個選項是否真的值得占用生活空間',
+    '從多個機會中留下少數能持續回應的方向',
+  ],
+  none: [
+    '定期讓休息、關係、興趣與自主選擇同時存在',
+    '檢查生活是否長期只剩單一角色或標準',
+    '發現某一面向持續被犧牲時，提前調整時間配置',
+  ],
+};
+
 const INNER_SCENE = {
   比肩: '真正做決定時，你仍需要確認這是自己的選擇，而不是為了避免衝突才答應',
   劫財: '和人一起投入會讓你有活力，但付出失衡時也最容易累積不滿',
@@ -167,6 +205,7 @@ export function lifeProfile(a) {
   const weak = a.strength.state === '承格不足';
   const concentrated = a.strength.concentrated;
   const pressure = PRESSURE_SCENE[a.diagnosis.primary.id] || PRESSURE_SCENE.none;
+  const pressureTurns = PRESSURE_VARIANTS[a.diagnosis.primary.id] || PRESSURE_VARIANTS.none;
   const tension = weak
     ? `外界要求一多，${p.strain}。這不是能力不足，而是你需要先有支持、休息與可承擔的範圍。`
     : concentrated
@@ -177,15 +216,15 @@ export function lifeProfile(a) {
     : concentrated
       ? '你很能靠自己的方式維持局面，但撐得越久，越容易把求助、退讓或單純享受生活視為不必要'
       : '你通常能隨情境調整，但若長期只照顧外在期待，內在真正重視的步調仍會以疲累或疏離提醒你';
-  const overview = `${OUTER_SCENE[primary]}；${INNER_SCENE[inner]}。${loadScene}。因此你一生真正要練習的，不是把所有情境都處理好，而是${pressure.turn}。`;
-  const diseaseLesson = `${pressure.scene}。較適合的轉向是：${pressure.turn}。`;
+  const overview = `${OUTER_SCENE[primary]}；${INNER_SCENE[inner]}。${loadScene}。因此你一生真正要練習的，不是把所有情境都處理好，而是${pressureTurns[0]}。`;
+  const diseaseLesson = `${pressure.scene}。較適合的轉向是：${pressureTurns[2]}。`;
   return {
     primary,
     secondary,
     inner,
     conclusion: `你的人生本質是${p.nature}，內在同時${i.nature}。`,
     overview,
-    overviewPractice: `最適合你的日常不是一味追求輕鬆，也不是不停證明自己，而是同時保留${p.joy}，並用「${pressure.turn}」檢查重要選擇。`,
+    overviewPractice: `最適合你的日常不是一味追求輕鬆，也不是不停證明自己，而是同時保留${p.joy}，並${pressureTurns[1]}。`,
     coreNeed: `真正重要的需求是${p.need}；在親近關係裡，還需要${i.need}。`,
     gift: `${p.gift}；${s.gift}。`,
     conflict: `關係有摩擦時，${p.strain}；若同時缺少理解或休息，${s.strain}。`,

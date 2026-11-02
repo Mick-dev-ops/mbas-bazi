@@ -222,7 +222,7 @@ export function functionalPractice(a, x) {
       none: '目前沒有單一問題壓過其他面向，重點是維持節奏並觀察最先出現的失衡。',
     }[a.diagnosis.primary.id] || '先處理反覆卡住的環節，再增加新的方向。';
   return {
-    before: prohibited ? r.excess : r.under,
+    before: prohibited ? `目前最常見的是：${r.excess}` : `開始調整前，${r.under}`,
     action: prohibited ? `先減少會放大「${r.area}」壓力的安排；${r.action}` : r.action,
     after: prohibited
       ? `減量後，${r.balanced}這個方向只需保留基本功能，不必繼續加強。`

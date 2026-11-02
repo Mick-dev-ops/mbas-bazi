@@ -184,7 +184,19 @@ export function relationshipCards(a, referenceYear) {
   const strict = childGods.some((x) => ['正官', '七殺', '比肩', '劫財'].includes(x));
   const forecast = relationshipForecast(a);
   const benefactors = a.benefactors;
-  const benefactorYears = benefactorTimeline(a);
+  const benefactorYears = benefactorTimeline(a, 18, 85, referenceYear);
+  const benefactorTable = (rows) => ({
+    headers: ['年份', '所在大運', '人物類型', '能提供的幫助', '成立條件', '干擾因素', '強度'],
+    rows: rows.map((x) => [
+      `${x.year}年（實歲${x.ageLabel}）`,
+      x.luck === '起運前' ? x.luck : `${x.luck}大運`,
+      `${x.role}：${x.stage}`,
+      x.help,
+      x.basis,
+      x.limitation,
+      x.strength,
+    ]),
+  });
   const cards = [
     card('一 一生姻緣與婚姻時間', forecast.marriage, [forecast.marriageNote]),
     card(
@@ -238,7 +250,7 @@ export function relationshipCards(a, referenceYear) {
       strict
         ? '若有子女，你可能先處理好生活與實際問題，希望孩子少走彎路；當孩子選擇不同做法時，也容易先想糾正。較適合把需要遵守的界線說清楚，其餘部分逐步交還孩子決定。'
         : '若有子女，較能在共同活動與理解興趣中累積關係；安排過多時，仍可能讓原本的陪伴轉為催促，保留孩子能自主完成的空間較有幫助。',
-      '親子相處著重生活安排、照顧分工與教養互動；不指定子女數量、性別、懷孕或出生結果。',
+      '數量與時間是傳統命理的傾向範圍；實際生育仍受個人選擇、伴侶、健康與生活條件影響。',
     ]),
     card('七 與父母的緣分', forecast.parents),
     card('八 貴人運整體判斷', benefactors.overall, [
@@ -247,33 +259,40 @@ export function relationshipCards(a, referenceYear) {
     ]),
     card(
       '九 容易幫助你的人與辨認方式',
-      `最值得辨認的是${benefactors.roles[0].person}。真正的支持會帶來可使用的方法、權限、條件或實際分擔，而不只是更多要求。`,
+      `實際幫助最大的是${benefactors.categories.actual.person}。若要取得正式位置，則要辨認${benefactors.categories.formal.person}。`,
       [
-        ...benefactors.roles.map(
-          (x) =>
-            `${x.label}（${x.god}）：${x.person}，通常會${x.help}。辨認方式：${x.real}；若是${x.false}，就不列為有力貴人。依據：${x.basis}。`,
-        ),
+        `最容易出現：${benefactors.categories.easiest.label}。${benefactors.categories.easiest.real}。`,
+        `幫助最大：${benefactors.categories.actual.label}。${benefactors.categories.actual.help}。`,
+        `帶來機會但可能增加成本：${benefactors.categories.opportunity.label}。${benefactors.categories.opportunity.limitation}。`,
+        `表面支持但可能增加責任：${benefactors.categories.burden.label}。若是${benefactors.categories.burden.false}，便不算有效支持。`,
         benefactors.gender,
       ],
     ),
     card(
-      '十 貴人運時間表',
-      benefactorYears.length
-        ? '以下是原局、大運與流年條件同時較完整的年份，依助力強度排序；它們代表較容易出現支持的窗口，不保證事件必然發生。'
-        : '目前沒有同時通過原局需要、歲運引動與承接條件的明顯年份，不宜只因出現印星、官星或天乙就指定貴人年。',
+      '十 過往貴人年份核對',
+      benefactorYears.past.length
+        ? '以下年份用來核對曾出現的支持是否真正落實。'
+        : '近十年沒有同時通過命局需要、大運環境與流年引動的明顯年份。',
       [],
+      benefactorYears.past.length ? { table: benefactorTable(benefactorYears.past) } : {},
+    ),
+    card(
+      '十一 未來十年貴人窗口',
+      benefactorYears.future.length
+        ? '依年份排列。高表示支持較能落實；中表示仍需補條件；觀察表示相關人物或議題出現，但不直接等於獲得幫助。'
+        : '未來十年未找到足以列為有效支持的組合；單獨出現官、印或天乙不直接算貴人年。',
+      [],
+      benefactorYears.future.length ? { table: benefactorTable(benefactorYears.future) } : {},
+    ),
+    card(
+      '十二 中長期貴人窗口',
+      '中長期按每一步大運分組，各運分別保留高、中、觀察年份，不讓晚年分數排擠近期窗口。',
+      benefactorYears.longTerm.map(
+        (group) =>
+          `${group.luck === '起運前' ? group.luck : `${group.luck}大運`}：${group.rows.length ? group.rows.map((x) => `${x.year}年${x.role}（${x.strength}）`).join('、') : '未找到完整成立年份'}。`,
+      ),
       {
-        table: {
-          headers: ['年份', '約略年齡', '大運', '人物類型', '觸發依據', '主要限制'],
-          rows: benefactorYears.map((x) => [
-            `${x.year}年 ${x.pillar}`,
-            `${x.age}歲前後`,
-            x.luck === '起運前' ? x.luck : `${x.luck}大運`,
-            `${x.role}：${x.stage}`,
-            x.basis,
-            x.limitation,
-          ]),
-        },
+        table: benefactorTable(benefactorYears.longTerm.flatMap((x) => x.rows)),
       },
     ),
   ];

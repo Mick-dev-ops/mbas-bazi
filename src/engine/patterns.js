@@ -176,8 +176,19 @@ export function judgePatterns(f, c, chart) {
     ],
     `${primary.name}；${monthJudgment.status}`,
   );
+  const mainMonthGod = monthly[0].god;
+  const structureName =
+    mainMonthGod === '比肩'
+      ? '建祿格'
+      : mainMonthGod === '劫財'
+        ? f.dm % 2 === 0
+          ? '陽刃格'
+          : '月劫格'
+        : `${monthName}格`;
   return {
     primary,
+    structureName,
+    auxiliaryStructure: primary.id === 'PAT-01' ? null : primary.name,
     monthly,
     monthJudgment,
     candidates,

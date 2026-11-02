@@ -1,7 +1,7 @@
 // Versioned semantic library: ten distinct channels × six life stages,
 // twenty-five directed function-pair relationships, structural modifiers and
 // palace effects. Selection uses actual chart facts; no random synonyms.
-export const SCENE_VERSION = 'scenes-1.6.0';
+export const SCENE_VERSION = 'scenes-3.0.0';
 export const GOD_GROUP = {
   比肩: 'peer',
   劫財: 'peer',

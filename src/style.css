@@ -955,6 +955,17 @@ th {
   #print-report table th:last-child {
     width: 56%;
   }
+  #print-report table.wide-table {
+    font-size: 8px;
+  }
+  #print-report table.wide-table th:last-child {
+    width: auto;
+  }
+  #print-report table.wide-table th,
+  #print-report table.wide-table td {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
 }
 @media print {
   html,

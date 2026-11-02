@@ -38,22 +38,22 @@ describe('結構化貴人判斷', () => {
     expect(new Set(charts.map((a) => a.benefactors.overall)).size).toBe(3);
   });
 
-  it('ranks annual windows by actual natal, luck and annual conditions', () => {
+  it('groups annual windows chronologically without letting late years crowd out the next decade', () => {
     const charts = [
       make({ year: 1994, month: 8, day: 10, hour: 13 }),
       make({ year: 1985, month: 3, day: 6, hour: 7 }),
       make({ year: 1988, month: 4, day: 22, hour: 19 }),
     ];
-    const timelines = charts.map((a) => benefactorTimeline(a));
-    expect(timelines.every((rows) => rows.length > 0 && rows.length <= 8)).toBe(true);
-    expect(new Set(timelines.map((rows) => rows.map((x) => x.year).join(','))).size).toBe(3);
-    for (const rows of timelines) {
-      expect(rows.every((x, i) => !i || rows[i - 1].score >= x.score)).toBe(true);
+    const timelines = charts.map((a) => benefactorTimeline(a, 18, 85, 2026));
+    expect(timelines.every((x) => x.future.length > 0 && x.longTerm.length > 0)).toBe(true);
+    expect(new Set(timelines.map((x) => x.future.map((r) => r.year).join(','))).size).toBe(3);
+    for (const timeline of timelines) {
+      expect(timeline.future.every((x, i) => !i || timeline.future[i - 1].year <= x.year)).toBe(true);
+      const rows = timeline.rows;
       expect(rows.every((x) => x.basis.includes('流年') || x.basis.includes('大運'))).toBe(true);
       expect(rows.every((x) => x.limitation.trim() && x.role.trim() && x.stage.trim())).toBe(true);
+      expect(rows.every((x) => ['高', '中', '觀察'].includes(x.strength))).toBe(true);
     }
-    expect(new Set(timelines.flat().map((x) => x.stage))).toEqual(
-      new Set(['容易遇見這類人物', '原有人脈開始提供幫助', '取得具體授權或支持']),
-    );
+    expect(new Set(timelines.flatMap((x) => x.rows).map((x) => x.stage)).size).toBeGreaterThan(1);
   });
 });

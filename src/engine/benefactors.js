@@ -10,6 +10,7 @@ import {
 } from '../data/constants.js';
 import { trace } from '../data/rules.js';
 import { annualReport } from './periods.js';
+import moment from 'moment-timezone/moment-timezone.js';
 
 export const TIANYI_BY_DAY_STEM = [
   [1, 7],
@@ -162,6 +163,7 @@ function roleCandidates(a) {
     const visible = items.some((x) => x.exposed);
     const rooted = items.some((x) => !x.exposed && x.force >= 0.2);
     const veto = a.use.veto.includes(element);
+    const functionState = a.decision.godFunctions.find((x) => x.god === name);
     let score = 7 - Math.max(0, order);
     if (required.has(name)) score += 4;
     if (rescueElements.has(element)) score += 4;
@@ -174,6 +176,11 @@ function roleCandidates(a) {
     )
       score -= 3;
     if (veto) score -= 12;
+    if (functionState?.state === '有利且足夠') score += 3;
+    if (functionState?.state === '有利但不足') score += 1;
+    if (functionState?.state === '有利但受制') score -= 1;
+    if (functionState?.state === '原本有利但過量') score -= 2;
+    if (functionState?.state === '不利且明顯') score -= 8;
     const limitation = veto
       ? '這股力量目前會加重原局限制，不列為主要貴人作用'
       : a.strength.state === '承格不足' && ['正官', '七殺'].includes(name)
@@ -186,6 +193,8 @@ function roleCandidates(a) {
       visible,
       rooted,
       sourcePositions: [...new Set(items.map((x) => x.position))],
+      functionState: functionState?.state || '中性',
+      flags: functionState?.flags || {},
       basis: itemBasis(items),
       limitation,
       ...ROLE_TEXT[name],
@@ -193,13 +202,7 @@ function roleCandidates(a) {
   })
     .filter((x) => !a.use.veto.includes(x.element))
     .sort((a, b) => b.score - a.score || GODS.indexOf(a.god) - GODS.indexOf(b.god));
-  const roles = [];
-  for (const candidate of sorted) {
-    if (roles.some((x) => x.element === candidate.element)) continue;
-    roles.push(candidate);
-    if (roles.length === 3) break;
-  }
-  return roles;
+  return sorted.slice(0, 6);
 }
 
 function natalTianyi(a) {
@@ -232,19 +235,48 @@ function natalTianyi(a) {
 }
 
 export function analyzeBenefactors(a) {
-  const roles = roleCandidates(a);
+  const candidates = roleCandidates(a);
   const tianyi = natalTianyi(a);
-  const primary = roles[0];
+  const actual = [...candidates].sort(
+    (x, y) =>
+      y.score - x.score ||
+      Number(y.functionState === '有利且足夠') - Number(x.functionState === '有利且足夠'),
+  )[0];
+  const easiest = [...candidates].sort(
+    (x, y) =>
+      Number(y.visible) + Number(y.rooted) - Number(x.visible) - Number(x.rooted) || y.score - x.score,
+  )[0];
+  const formal =
+    [...candidates]
+      .filter((x) => ['正官', '正印', '七殺'].includes(x.god))
+      .sort((x, y) => y.score - x.score)[0] || actual;
+  const opportunity =
+    [...candidates]
+      .filter((x) => ['偏財', '正財', '劫財', '七殺'].includes(x.god))
+      .sort((x, y) => y.score - x.score)[0] || actual;
+  const burden =
+    [...candidates].sort(
+      (x, y) =>
+        Number(['有條件可用', '原本有利但過量', '有利但受制'].includes(y.functionState)) -
+          Number(['有條件可用', '原本有利但過量', '有利但受制'].includes(x.functionState)) ||
+        x.score - y.score,
+    )[0] || actual;
+  const categories = {
+    easiest,
+    actual,
+    formal,
+    opportunity,
+    burden,
+  };
+  const roles = [...new Map(Object.values(categories).map((x) => [x.god, x])).values()];
+  const primary = actual;
   const strength =
     primary.score >= 12 ? '較明顯' : primary.score >= 8 ? '有條件可用' : '需要主動辨認';
-  const overall = `整體貴人運${strength}。最有力的是${primary.label}，其次為${
-    roles
-      .slice(1)
-      .map((x) => x.label)
-      .join('、') || '其他臨時助力'
-  }；真正有幫助的人，會${primary.help}，而不是只增加期待與責任。`;
+  const overall = `整體貴人運${strength}。最容易遇到的是${easiest.label}，實際幫助最大的是${actual.label}；若要取得正式位置，較要辨認${formal.label}。真正的支持會${actual.help}，不會只留下更多責任。`;
   return {
     overall,
+    candidates,
+    categories,
     roles,
     tianyi,
     gender: '此盤無法可靠判定貴人性別；陰陽干與陰貴、陽貴只用於規則計算，不直接換算成男性或女性。',
@@ -347,6 +379,8 @@ function scoreWindow(a, segment, role) {
   if (sourceAction.some((x) => /合/.test(x.type))) {
     score += 1.5;
     triggers.push('流年合動原局助力位置');
+  } else if (sourceAction.length) {
+    triggers.push('流年引動原局助力位置');
   }
   const disturbances = sourceAction.filter((x) => /沖|刑|害/.test(x.type));
   const sourceBreaks = role.sourcePositions.filter((position) =>
@@ -372,22 +406,60 @@ function scoreWindow(a, segment, role) {
   if (annualTianyi?.tensions.length)
     limits.push(`天乙同時有${annualTianyi.tensions.join('、')}，只列輔助訊號`);
   if (!limits.length) limits.push(role.limitation);
-  return { score, triggers: [...new Set(triggers)], stage, limitation: limits.join('；') };
+  const annualTriggered =
+    annual.stem === role.god ||
+    annual.hidden.includes(role.god) ||
+    Boolean(annualTianyi && !annualTianyi.tensions.length) ||
+    sourceAction.length > 0;
+  const luckEnvironment =
+    luck.stem === role.god ||
+    luck.hidden.includes(role.god) ||
+    segment.priority === role.element ||
+    (segment.periodCapacity.state !== '承格不足' && role.score >= 8);
+  if (
+    luckEnvironment &&
+    !triggers.some((x) => x.includes('大運')) &&
+    segment.priority !== role.element
+  )
+    triggers.push('大運提供可承接的環境');
+  const disabled =
+    disturbances.length + sourceBreaks.length >= 2 ||
+    ['不利且明顯', '原本有利但過量'].includes(role.functionState);
+  return {
+    score,
+    triggers: [...new Set(triggers)],
+    stage,
+    limitation: limits.join('；'),
+    annualTriggered,
+    luckEnvironment,
+    disabled,
+  };
 }
 
-export function benefactorTimeline(a, minAge = 18, maxAge = 85) {
+export function benefactorTimeline(
+  a,
+  minAge = 18,
+  maxAge = 85,
+  referenceYear = new Date().getUTCFullYear(),
+) {
   const rows = [];
-  const from = Math.max(a.chart.solarYear, a.chart.birth.year + minAge);
+  const from = a.chart.birth.year + minAge;
   const to = Math.min(a.chart.birth.year + maxAge, a.chart.birth.year + 110);
   for (let year = from; year <= to; year++) {
     const report = annualReport(a, year);
     for (const segment of report.segments) {
-      for (const role of a.benefactors.roles) {
+      for (const role of a.benefactors.candidates) {
         const scored = scoreWindow(a, segment, role);
-        if (scored.triggers.length < 2 || scored.score < 7) continue;
+        if (!scored.annualTriggered || !scored.luckEnvironment || scored.disabled) continue;
         rows.push({
           year,
           age: year - a.chart.birth.year,
+          ageLabel: (() => {
+            const birth = moment.tz(a.chart.birth.ms, a.chart.birth.zone);
+            const startAge = moment.tz(segment.start, a.chart.birth.zone).diff(birth, 'years');
+            const endAge = moment.tz(segment.end - 1, a.chart.birth.zone).diff(birth, 'years');
+            return startAge === endAge ? `${startAge}歲` : `${startAge}–${endAge}歲`;
+          })(),
           pillar: report.pillar.text,
           luck: segment.luck?.text || '起運前',
           role: `${role.label}（${role.god}）`,
@@ -396,6 +468,7 @@ export function benefactorTimeline(a, minAge = 18, maxAge = 85) {
           basis: scored.triggers.join('；'),
           limitation: scored.limitation,
           score: scored.score,
+          strength: scored.score >= 9 ? '高' : scored.score >= 6.5 ? '中' : '觀察',
           trace: trace(
             'BENE-03',
             true,
@@ -411,15 +484,38 @@ export function benefactorTimeline(a, minAge = 18, maxAge = 85) {
     const prior = byYear.get(row.year);
     if (!prior || row.score > prior.score) byYear.set(row.year, row);
   }
-  const ranked = [...byYear.values()].sort((a, b) => b.score - a.score || a.year - b.year);
-  const selected = [];
-  const roleCounts = new Map();
-  for (const row of ranked) {
-    const count = roleCounts.get(row.role) || 0;
-    if (count >= 4) continue;
-    selected.push(row);
-    roleCounts.set(row.role, count + 1);
-    if (selected.length === 8) break;
+  const annual = [...byYear.values()];
+  const choose = (list, count) =>
+    [...list]
+      .sort((a, b) => b.score - a.score || a.year - b.year)
+      .slice(0, count)
+      .sort((a, b) => a.year - b.year);
+  const past = choose(
+    annual.filter((x) => x.year < referenceYear && x.year >= referenceYear - 10),
+    5,
+  );
+  const future = annual
+    .filter((x) => x.year >= referenceYear && x.year < referenceYear + 10)
+    .sort((a, b) => a.year - b.year);
+  const later = annual.filter((x) => x.year >= referenceYear + 10);
+  const luckGroups = new Map();
+  for (const row of later) {
+    if (!luckGroups.has(row.luck)) luckGroups.set(row.luck, []);
+    luckGroups.get(row.luck).push(row);
   }
-  return selected;
+  const longTerm = [...luckGroups.entries()]
+    .map(([luck, group]) => {
+      const high = choose(group.filter((x) => x.strength === '高'), 1);
+      const medium = choose(group.filter((x) => x.strength === '中'), 1);
+      const watch = choose(group.filter((x) => x.strength === '觀察'), 1);
+      return { luck, rows: [...high, ...medium, ...watch].sort((a, b) => a.year - b.year) };
+    })
+    .sort((a, b) => (a.rows[0]?.year || Infinity) - (b.rows[0]?.year || Infinity));
+  return {
+    referenceYear,
+    past,
+    future,
+    longTerm,
+    rows: [...past, ...future, ...longTerm.flatMap((x) => x.rows)],
+  };
 }

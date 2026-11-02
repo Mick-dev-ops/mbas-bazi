@@ -15,6 +15,26 @@ const COMBINES = [
   [3, 8, 0],
   [4, 9, 1],
 ];
+const BREAKS = [
+  [0, 9],
+  [1, 4],
+  [2, 11],
+  [3, 6],
+  [5, 8],
+  [7, 10],
+];
+const TRINES = [
+  [8, 0, 4],
+  [11, 3, 7],
+  [2, 6, 10],
+  [5, 9, 1],
+];
+const MEETINGS = [
+  [2, 3, 4],
+  [5, 6, 7],
+  [8, 9, 10],
+  [11, 0, 1],
+];
 export function interactions(pillars) {
   const effects = [],
     factors = pillars.map(() => ({ stem: 1, root: 1 }));
@@ -79,6 +99,7 @@ export function interactions(pillars) {
           pillars.some((p, k) => k !== i && k !== j && E[p.stem] === combine[2]);
         effects.push({
           type: '合化審查',
+          transformed: transform,
           positions: [i, j],
           detail: transform
             ? '符合保守合化候選條件；本版保留原干作用力、不更換日主'
@@ -91,6 +112,22 @@ export function interactions(pillars) {
           ),
         });
       }
+      if (near && mod(E[b.stem] - E[a.stem], 5) === 1)
+        effects.push({
+          type: '天干生',
+          positions: [i, j],
+          affectedPositions: [j],
+          detail: `${STEMS[a.stem]}生${STEMS[b.stem]}，記錄實際生扶方向`,
+          trace: trace('ACT-06', true, [pillars[i].text, pillars[j].text], '天干生扶成立'),
+        });
+      else if (near && mod(E[a.stem] - E[b.stem], 5) === 1)
+        effects.push({
+          type: '天干生',
+          positions: [j, i],
+          affectedPositions: [i],
+          detail: `${STEMS[b.stem]}生${STEMS[a.stem]}，記錄實際生扶方向`,
+          trace: trace('ACT-06', true, [pillars[j].text, pillars[i].text], '天干生扶成立'),
+        });
       if (near && (mod(E[a.stem] - E[b.stem], 5) === 2 || mod(E[b.stem] - E[a.stem], 5) === 2)) {
         const target = mod(E[a.stem] - E[b.stem], 5) === 2 ? i : j;
         add(
@@ -130,26 +167,56 @@ export function interactions(pillars) {
       )
         add('ACT-03', '地支害', [i, j], '六害：根氣受擾', weaken(0.9));
       if (
+        BREAKS.some(
+          ([x, y]) => (x === a.branch && y === b.branch) || (y === a.branch && x === b.branch),
+        )
+      )
+        add('ACT-07', '地支破', [i, j], '相破：原有接續出現鬆動，條件需要重新確認', weaken(0.92));
+      if (
         (a.branch === b.branch && [4, 6, 9, 11].includes(a.branch)) ||
         [a.branch, b.branch].sort((x, y) => x - y).join() === '0,3'
       )
         add('ACT-03', '地支刑', [i, j], '自刑或子卯刑：根氣受擾', weaken(0.8));
+      if (a.stem === b.stem && a.branch === b.branch)
+        effects.push({
+          type: '伏吟',
+          positions: [i, j],
+          affectedPositions: [i, j],
+          detail: `${a.text}重現：同一議題再次出現，需比較前後處理方式`,
+          trace: trace('ACT-08', true, [a.text, b.text], '伏吟成立'),
+        });
+      if (
+        mod(a.branch - b.branch, 12) === 6 &&
+        (mod(E[a.stem] - E[b.stem], 5) === 2 || mod(E[b.stem] - E[a.stem], 5) === 2)
+      )
+        effects.push({
+          type: '反吟',
+          positions: [i, j],
+          affectedPositions: [i, j],
+          detail: `${a.text}與${b.text}干剋支沖：原有安排出現方向相反的拉力`,
+          trace: trace('ACT-08', true, [a.text, b.text], '反吟成立'),
+        });
     }
+  for (const s of TRINES) {
+    const present = s.filter((b) => pillars.some((p) => p.branch === b));
+    if (present.length === 2) {
+      const positions = pillars.flatMap((p, i) => (present.includes(p.branch) ? [i] : []));
+      effects.push({
+        type: '地支半合',
+        positions,
+        affectedPositions: positions,
+        detail: `${present.map((b) => BRANCHES[b]).join('')}半合：只記聚合傾向，不視為完整成局`,
+        trace: trace('ACT-05', true, positions.map((i) => pillars[i].text), '半合候選'),
+      });
+    }
+  }
   const sets = [
     ...[
       [2, 5, 8],
       [1, 7, 10],
     ].map((s) => ({ s, type: '三刑', id: 'ACT-03' })),
-    ...[
-      [8, 0, 4],
-      [11, 3, 7],
-      [2, 6, 10],
-      [5, 9, 1],
-      [2, 3, 4],
-      [5, 6, 7],
-      [8, 9, 10],
-      [11, 0, 1],
-    ].map((s) => ({ s, type: '三合三會', id: 'ACT-05' })),
+    ...TRINES.map((s) => ({ s, type: '三合', id: 'ACT-05' })),
+    ...MEETINGS.map((s) => ({ s, type: '三會', id: 'ACT-05' })),
   ];
   for (const { s, type, id } of sets)
     if (s.every((b) => pillars.some((p) => p.branch === b))) {
@@ -166,4 +233,6 @@ export function interactions(pillars) {
 }
 
 export const isBranchInteraction = (effect) =>
-  ['地支沖', '地支合', '地支害', '地支刑', '三刑', '三合三會'].includes(effect.type);
+  ['地支沖', '地支合', '地支半合', '地支害', '地支破', '地支刑', '三刑', '三合', '三會'].includes(
+    effect.type,
+  );

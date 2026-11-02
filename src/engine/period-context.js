@@ -4,6 +4,7 @@ import { buildFacts, capacity } from './facts.js';
 import { judgePatterns } from './patterns.js';
 import { flowAnalysis } from './flow.js';
 import { climateAnalysis, diagnose, adjudicate } from './remedies.js';
+import { buildDecisionModel, classifyPeriodState } from './decision-model.js';
 
 const contextCache = new WeakMap();
 export function clearContextCache(a) {
@@ -69,7 +70,17 @@ function computeContext(a, p) {
     ) ??
     null;
   const effects = action.effects.filter((x) => x.positions.some((i) => i >= 4));
-  return {
+  const decision = buildDecisionModel({
+    facts,
+    strength: c,
+    patterns,
+    flow,
+    climate,
+    diagnosis,
+    use: proposed,
+    action,
+  });
+  const context = {
     entrants,
     chart,
     facts,
@@ -85,6 +96,7 @@ function computeContext(a, p) {
     rootsBroken,
     natalUse: a.use,
     effects,
+    decision,
     branchEffects: effects.filter(isBranchInteraction),
     annualEffects: entrants.some((x) => x.label === '流年')
       ? effects.filter((x) => x.positions.includes(chart.pillars.length - 1))
@@ -101,6 +113,14 @@ function computeContext(a, p) {
       priority,
     }),
   };
+  context.periodStates = classifyPeriodState(
+    a,
+    context,
+    Boolean(p.luck),
+    Boolean(p.annual),
+    Boolean(p.transition),
+  );
+  return context;
 }
 export function elementGrowth(a, ctx, e) {
   const role = ['peer', 'output', 'wealth', 'authority', 'support'][mod(e - a.facts.de, 5)];

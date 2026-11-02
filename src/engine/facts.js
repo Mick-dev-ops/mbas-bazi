@@ -119,6 +119,30 @@ export function capacity(facts) {
   const concentrated =
     mainRoots.length >= 3 && rootMass >= 1.2 && dayRoot && peerStem && ratio >= 0.6;
   const state = concentrated || ratio >= 1.2 ? '可承' : ratio <= 0.85 ? '承格不足' : '需配合';
+  const supportShare = support / Math.max(0.2, support + load);
+  const noRoot = mainRoots.length === 0 && !dayRoot;
+  const bodyState =
+    concentrated && ratio >= 3 && supportShare >= 0.72
+      ? '專旺'
+      : noRoot && !peerStem && ratio <= 0.32
+        ? '從弱'
+        : noRoot && ratio <= 0.62 && support >= 0.45
+          ? '假從'
+          : noRoot && ratio >= 4 && load <= 0.8
+            ? '從強'
+            : ratio < 0.45
+              ? '極弱'
+              : ratio < 0.75
+                ? '偏弱'
+                : ratio < 0.95
+                  ? '中和偏弱'
+                  : ratio < 1.2
+                    ? '中和'
+                    : ratio < 1.55
+                      ? '中和偏強'
+                      : ratio < 2.3
+                        ? '偏強'
+                        : '極強';
   const body = concentrated
     ? '根氣集中而身旺'
     : ratio >= 1.2
@@ -128,6 +152,7 @@ export function capacity(facts) {
         : '旺衰需配合';
   return {
     state,
+    bodyState,
     body,
     concentrated,
     rootAssessment: { mainRoots: mainRoots.map((x) => x.id), rootMass, dayRoot, peerStem },

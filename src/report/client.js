@@ -1,6 +1,6 @@
 import { FINANCIAL_STAGES, financialStage, overallFinance } from './finance-story.js';
 import { structureBasis, financeBasis } from './basis.js';
-import { financialMechanisms, financeConclusions } from '../engine/finance.js';
+import { financialMechanisms, financeConclusions, financeRemedies } from '../engine/finance.js';
 import { functionalPractice } from './templates.js';
 import { solarTerms } from '../calendar/solar.js';
 import { relationshipCards, relationshipOverview } from './relationship.js';
@@ -10,6 +10,8 @@ import { ELEMENTS, STEM_ELEMENT, HIDDEN, god } from '../data/constants.js';
 import { periodImpact, annualReport } from '../engine/periods.js';
 import { formatTime } from '../calendar/time.js';
 import { lifeProfile } from './life-story.js';
+import { auditTextQuality, enforceTextUniqueness } from './text-quality.js';
+import { COVERAGE_SUMMARY } from '../data/combination-matrix.js';
 
 // Presentation owns no use adjudication. It translates the single natal result
 // and period results into age-appropriate conclusions, without exporting traces.
@@ -25,7 +27,7 @@ const PERIOD_LEAD = {
   重整: '這段時間既有安排容易出現明顯變動。',
   競爭: '這段時間人際與分配壓力較明顯。',
   支出: '這段時間機會與支出一起增加。',
-  定案: '這段時間適合確立長期安排。',
+  定案: '這段時間會把口頭方向轉成明確承諾。',
   擴張: '這段時間選擇與活動增加。',
 };
 const MONEY_LEAD = {
@@ -33,7 +35,7 @@ const MONEY_LEAD = {
   競爭: '財務重點在分配與留財。',
   支出: '財務上要先控制成本。',
   定案: '財務較適合建立穩定安排。',
-  擴張: '財務機會增加，但不宜一次投入過多。',
+  擴張: '新收入管道變多，成本與回款條件要逐項核對。',
 };
 const annualObstacle = (p) => {
   const annualPos = p.luck ? 5 : 4;
@@ -200,8 +202,8 @@ export function describePeriod(a, p, slice) {
     stage: slice.stage,
     theme: story.theme,
     domains: slice.age < 18 ? ['學習與升學', '家庭支持', '同儕相處'] : story.domains,
-    summary: compact(`${PERIOD_LEAD[p.mode] || ''}${story.summary}`, 3),
-    money: compact(`${MONEY_LEAD[p.mode] || ''}${story.money}`, 2),
+    summary: compact(story.summary, 3),
+    money: compact(story.money, 2),
     financialStage: story.financialStage || stageOf(slice.age),
     relation: story.relation,
     scenarios: story.scenarios,
@@ -387,6 +389,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const financeRows = financePeriods.map((p) => [p.dateLabel, p.ageLabel, p.luck, p.money]);
   const mechanisms = financialMechanisms(a.facts, a.strength);
   const moneyResult = financeConclusions(mechanisms);
+  const moneyRemedies = financeRemedies(mechanisms);
   const basis = structureBasis(a);
   const life = lifeProfile(a);
   const structureOutcome =
@@ -450,8 +453,9 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
           ? '支出較容易花在課程、工具、研究與重做。改善方法是讓每一筆準備費用都對應到實際用途。'
           : '支出以完成事情、維護與日常生活為主，依實際需要安排即可，不必預先假設會有特殊負擔。',
     ]),
+    card('四 財務問題與改善方式', moneyRemedies[0], moneyRemedies.slice(1)),
     card(
-      '四 財運轉折與大運時間線',
+      '五 財運轉折與大運時間線',
       '每一步大運作為一個完整的十年財務背景；只有實際換運時才另起一段，不再額外拆段。',
       [],
       {
@@ -579,7 +583,9 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       const annual = {
         year: referenceYear,
         conclusion: `${referenceYear} 年當期${currentGuidance}`,
-        before: isAvoid ? practice.excess : practice.under,
+        before: isAvoid
+          ? `目前最常見的是：${practice.excess}`
+          : `開始調整前，${practice.under}`,
         after: practice.after,
         under: practice.under,
         balanced: practice.balanced,
@@ -638,14 +644,14 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       mechanisms.income === 'output-chain'
         ? '賺錢主線以可持續交付的專業為重，財富累積的關鍵在把報酬實際留下，而非只增加事情與工時。'
         : moneyResult.income,
-      `實際生活裡，${moneyResult.retention}${moneyResult.expense}`,
+      '整體要同時核對收入來源、真正可用的餘額與持續負擔；三者的具體差異列在下方。',
       favorableAdults.length
         ? `已列大運中，較有專業接到需求條件的階段包括${favorableAdults.slice(0, 3).join('、')}；仍須同時核對各段的資金占用與支出。`
         : '已列大運尚未出現足以單獨指定收入明顯開展階段的完整接續；各階段先按實際承接與收支變化判斷。',
     ]),
     card('緣分總評', `${compact(relations[0].conclusion, 1)}${relationOverview.conclusion}`, [
       ...relationOverview.paragraphs,
-      relations[0].paragraphs[0],
+      '關係窗口要分成相遇、確認、磨合與家庭安排，不能把同一年直接寫成必然結婚或分離。',
       `子女方面，${relations[5].conclusion}`,
       `父母方面，${relations[6].conclusion}貴人方面，${relations[7].conclusion}`,
     ]),
@@ -670,11 +676,12 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       `整體優先順序：${natalOrder}。第一順位的${ELEMENTS[a.use.order[0]]}，最先要改善的是${functionalPractice(a, a.use.elements[a.use.order[0]]).area}。`,
       [
         `實際調整時依序為${a.use.operationOrder.map((e) => ELEMENTS[e]).join(' > ')}。先做的是：${functionalPractice(a, a.use.elements[a.use.operationOrder[0]]).action}`,
+        `財務若要改善，五行生活調整必須落到具體條件：${moneyRemedies.join('')}`,
         `${referenceYear} 年處於${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}，當期順序改為${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。今年先觀察${activePractice.area}，具體狀態與做法列在下方。`,
       ],
     ),
   ];
-  return {
+  const report = {
     referenceYear,
     pages: [essence, finance, relations, periodCards, elements].map((cards, i) => ({
       name: names[i],
@@ -687,7 +694,19 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       },
       cards,
     })),
+    meta: {
+      structure: a.decision.pattern,
+      disease: a.decision.disease,
+      bodyState: a.decision.bodyState,
+      natalOrder: a.decision.labels.natalOrder,
+      operationOrder: a.decision.labels.operationOrder,
+      currentOrder: active.use.order.map((e) => ELEMENTS[e]),
+      coverage: COVERAGE_SUMMARY,
+    },
   };
+  enforceTextUniqueness(report);
+  report.meta.textQuality = auditTextQuality(report);
+  return report;
 }
 
 export function decadeAnnualRows(a, luck, { splitByLifeStage = false } = {}) {

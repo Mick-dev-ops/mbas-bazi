@@ -92,17 +92,22 @@ describe('十神、根氣與干支作用', () => {
     expect(t.trace.passed).toBe(true);
     expect(ps[0].stem).toBe(0);
   });
-  it('三合齊備才標候選；半合不成立', () => {
+  it('三合齊備與半合分開標示，半合不冒充完整成局', () => {
     expect(
       interactions([cycle(8), cycle(0), cycle(4), cycle(1)]).effects.some(
-        (x) => x.type === '三合三會',
+        (x) => x.type === '三合',
       ),
     ).toBe(true);
     expect(
       interactions([cycle(8), cycle(0), cycle(2), cycle(1)]).effects.some(
-        (x) => x.type === '三合三會',
+        (x) => x.type === '三合',
       ),
     ).toBe(false);
+    expect(
+      interactions([cycle(8), cycle(0), cycle(2), cycle(1)]).effects.some(
+        (x) => x.type === '地支半合',
+      ),
+    ).toBe(true);
   });
   it('刑與害作用、隔柱沖折損小於相鄰', () => {
     const a = interactions([cycle(0), cycle(6), cycle(7), cycle(3)]);

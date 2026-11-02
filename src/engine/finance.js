@@ -115,3 +115,29 @@ export function financeConclusions(m) {
     }[m.expense],
   };
 }
+
+export function financeRemedies(m) {
+  const rows = [];
+  if (m.income === 'output-chain')
+    rows.push('報價前寫清完成內容、驗收方式、修改次數與收款日期，避免成果完成卻沒有形成可收款項。');
+  else if (m.income === 'position')
+    rows.push('確認固定報酬對應哪些責任、權限與額外工作；超出範圍時另議價格或資源。');
+  else if (m.income === 'demand')
+    rows.push('先核對需求、價格、付款節點與取消條件，再投入時間或採購。');
+  else rows.push('先固定一項可完成的內容，訂出價格、驗收與回款條件，再增加收入方向。');
+  if (m.retention === 'distribution')
+    rows.push('共同投入前先寫清分潤、所有權、誰能決定支出，以及任何一方退出時如何結算。');
+  else if (m.retention === 'blocked')
+    rows.push('把收入、必要成本與可自由使用的餘額分帳；每筆持續投入都要有預算上限與停止條件。');
+  else if (m.retention === 'capacity')
+    rows.push('把外包、人力、工時與墊款算進價格，採分段驗收及分段回款，避免收入先被承接成本吃掉。');
+  else rows.push('每次收款後固定保留一部分不再投入，持續核對真正能自由使用的餘額。');
+  if (m.expense === 'obligation')
+    rows.push('新增責任時同步確認費用由誰承擔、預算由誰決定，以及責任結束後哪些支出可以停止。');
+  else if (m.expense === 'preparation')
+    rows.push('課程、工具或研究費用須對應一項可驗收成果；沒有使用期限與成果的準備支出先暫停。');
+  else if (m.expense === 'capacity')
+    rows.push('先設定每月可承受的補救與外援預算，超過上限便縮小範圍，不用額外支出換取勉強維持。');
+  else rows.push('把一次交付、後續維護與新增需求分開計價，避免持續成本藏在原本承諾裡。');
+  return rows;
+}

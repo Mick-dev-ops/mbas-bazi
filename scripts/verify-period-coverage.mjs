@@ -15,7 +15,7 @@ import { writeFileSync } from 'node:fs';
 // It verifies that every combination returns usable values without exposing
 // internal analysis fields. It deliberately sets no length or style quota.
 const result = {
-  version: 'delta-scenes-1.4.0',
+  version: 'delta-scenes-3.0.0',
   functionalPairs: 0,
   declaredStructureProfiles: 0,
   charts: 0,

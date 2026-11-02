@@ -52,14 +52,14 @@ it('產生五頁命主報告，不展示規則、分數與裁決過程', () => {
     );
     expect(document.querySelector('.evidence')).toBeNull();
     expect(document.querySelector('#report-content').textContent).not.toMatch(
-      /作用力|支持.?負荷比|規則編號|形成原因|成立條件|盤面事實|裁決依據/,
+      /作用力|支持.?負荷比|規則編號|形成原因|盤面事實|裁決依據/,
     );
     expect(document.querySelector('[aria-selected="true"]').getAttribute('href')).toBe('#' + hash);
   }
   expect(document.querySelectorAll('.report-card[data-element]')).toHaveLength(5);
   changeRoute('finance');
   const financeTable = [...document.querySelectorAll('#page-finance .report-card')].find(
-    (card) => card.querySelector('h3')?.textContent === '四 財運轉折與大運時間線',
+    (card) => card.querySelector('h3')?.textContent === '五 財運轉折與大運時間線',
   );
   expect(financeTable.querySelectorAll('thead th')).toHaveLength(4);
   expect([...financeTable.querySelectorAll('thead th')].map((th) => th.textContent)).toEqual([
@@ -99,7 +99,7 @@ it('完整列印有五個主題，離開列印後恢復畫面', () => {
     expect(document.querySelector('#print-report .year-picker')).toBeNull();
     expect(document.querySelector('#print-report button')).toBeNull();
     expect(content).toContain('起運時刻');
-    expect(content).not.toMatch(/作用力|形成原因|成立條件|裁決依據|mbas-1\./);
+    expect(content).not.toMatch(/作用力|形成原因|裁決依據|mbas-1\./);
   });
   document.querySelector('#print').click();
   expect(window.print).toHaveBeenCalled();

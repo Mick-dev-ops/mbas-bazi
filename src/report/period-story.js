@@ -19,7 +19,8 @@ function effectStory(a, ctx, x, slice) {
     i === 2 && !branches ? (slice.age < 18 ? '個人學習步調' : '個人決策與步調') : names[i],
   );
   const other = x.positions.some((i) => ctx.chart.pillars[i]?.label === '大運');
-  const area = areas.join('、') || (other ? '大運已建立的安排' : '本期新增安排');
+  const area = areas.join('、') || (other ? '大運既有安排' : '本期新增安排');
+  const owner = `${area}的`;
   const source = x.positions
     .map(
       (i) =>
@@ -31,9 +32,9 @@ function effectStory(a, ctx, x, slice) {
     .map((i) => i.god);
   let text;
   if (x.type.includes('沖'))
-    text = `${area}較需調整既定時間、位置或生活安排；變動會牽動原有接續，宜先安排移轉而非同時擴張。`;
+    text = `${owner}既定時間或位置被打開；先完成移交，再啟動新的安排。`;
   else if (/刑|害/.test(x.type))
-    text = `${area}的配合成本增加，需核對反覆修改、界線或約定落差；宜一次釐清問題，避免靠持續忍讓維持。`;
+    text = `${owner}配合成本增加，需核對反覆修改、界線或約定落差；宜一次釐清問題，避免靠持續忍讓維持。`;
   else if (x.type === '天干剋') {
     const hitsWealth = affected.some((g) => ['正財', '偏財'].includes(g));
     const hitsPeer = affected.some((g) => ['比肩', '劫財'].includes(g)) || targets.includes(2);
@@ -48,11 +49,11 @@ function effectStory(a, ctx, x, slice) {
         ? `${area}較容易遇到做法受限、反覆修改或完成時間被壓縮，重要想法宜先整理成可執行的小步驟。`
         : hitsPeer
           ? `${area}的自主空間變小，${ctx.capacity.state === '承格不足' ? '要求可能超過目前能負擔的程度，宜先減少同時進行的事情。' : '把責任與可決定的範圍一起談清楚，較不容易只剩配合。'}`
-          : `${area}需要重新協調，先確認時間、責任與退出方式，不必把調整直接視為壞事。`;
-  } else if (x.type === '三合三會')
-    text = `${area}的投入方向變得集中，適合把力氣放在一兩項最重要的事情，避免其他生活面向同時失去彈性。`;
+          : `${area}需要重新協調；把開始時間、各自責任與結束條件分開確認。`;
+  } else if (/三合|三會/.test(x.type))
+    text = `${owner}投入方向變得集中，適合把力氣放在一兩項最重要的事情，避免其他生活面向同時失去彈性。`;
   else if (x.type === '天干合' || x.type === '地支合')
-    text = `${area}的連結變緊，較容易形成共同安排；約定若不清楚，也可能因互相等待而拖慢進度。`;
+    text = `${owner}連結變緊，較容易形成共同安排；約定若不清楚，也可能因互相等待而拖慢進度。`;
   else return null;
   return {
     id: effectKey(x),
@@ -96,7 +97,6 @@ export function periodThemes(a, p, slice) {
         )
       ) {
         event.change = '加強';
-        event.text = '本年加強大運已有的作用：' + event.text;
       } else event.change = '新增';
     }
   const seen = new Set();
