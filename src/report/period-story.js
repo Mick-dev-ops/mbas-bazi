@@ -19,7 +19,7 @@ function effectStory(a, ctx, x, slice) {
     i === 2 && !branches ? (slice.age < 18 ? '個人學習步調' : '個人決策與步調') : names[i],
   );
   const other = x.positions.some((i) => ctx.chart.pillars[i]?.label === '大運');
-  const area = areas.join('與') || (other ? '大運已建立的安排' : '本期新增安排');
+  const area = areas.join('、') || (other ? '大運已建立的安排' : '本期新增安排');
   const source = x.positions
     .map(
       (i) =>
@@ -39,12 +39,16 @@ function effectStory(a, ctx, x, slice) {
     const hitsPeer = affected.some((g) => ['比肩', '劫財'].includes(g)) || targets.includes(2);
     const hitsOutput = affected.some((g) => ['食神', '傷官'].includes(g));
     text = hitsWealth
-      ? `${area}出現進帳或新機會時，部分款項仍可能先被成本與既定用途占用，需分清收入與真正能留下的錢。`
+      ? slice.age < 18
+        ? `${area}取得活動或學習資源時，部分支持可能已有固定用途，需分清能自由運用的部分。`
+        : slice.age >= 70
+          ? `${area}涉及款項或新安排時，需分清固定費用、帳面已有資源與當下能直接使用的部分。`
+          : `${area}出現進帳或新機會時，部分款項仍可能先被成本與既定用途占用，需分清收入與真正能留下的錢。`
       : hitsOutput
         ? `${area}較容易遇到做法受限、反覆修改或完成時間被壓縮，重要想法宜先整理成可執行的小步驟。`
         : hitsPeer
           ? `${area}的自主空間變小，${ctx.capacity.state === '承格不足' ? '要求可能超過目前能負擔的程度，宜先減少同時進行的事情。' : '把責任與可決定的範圍一起談清楚，較不容易只剩配合。'}`
-          : `${area}的原有安排需要重新協調，先確認時間、責任與退出方式，不必把調整直接視為壞事。`;
+          : `${area}需要重新協調，先確認時間、責任與退出方式，不必把調整直接視為壞事。`;
   } else if (x.type === '三合三會')
     text = `${area}的投入方向變得集中，適合把力氣放在一兩項最重要的事情，避免其他生活面向同時失去彈性。`;
   else if (x.type === '天干合' || x.type === '地支合')

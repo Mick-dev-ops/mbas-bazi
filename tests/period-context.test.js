@@ -7,6 +7,7 @@ import {
   clientAnnual,
   buildClientReports,
   decadeAnnualRows,
+  decadeHighlights,
 } from '../src/report/client.js';
 import {
   CHANNELS,
@@ -102,5 +103,15 @@ it('decade development opens with concrete effects instead of a repeated topic p
   const reports = a.chart.luck.map((l) => clientLuckCycle(a, l));
   expect(reports.every((p) => !p.summary.startsWith('這段大運以'))).toBe(true);
   expect(reports.every((p) => !p.summary.includes('為外在主題'))).toBe(true);
-  expect(new Set(reports.map((p) => p.summary.split('。')[0])).size).toBeGreaterThan(1);
+  expect(reports.every((p) => !p.summary.includes('重新安排順序'))).toBe(true);
+  expect(new Set(reports.map((p) => p.summary.split('。')[0])).size).toBe(reports.length);
+});
+it('decade wording changes with the natal chart even under the same luck pillar', () => {
+  const b = analyze(
+    calculate({ year: 2000, month: 1, day: 1, hour: 3, minute: 0, sex: '女', location: 'tw-0' }),
+  );
+  const luck = cycle(11);
+  expect(decadeHighlights(a, periodImpact(a, luck), 35)).not.toBe(
+    decadeHighlights(b, periodImpact(b, luck), 35),
+  );
 });

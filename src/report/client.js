@@ -4,7 +4,7 @@ import { financialMechanisms, financeConclusions } from '../engine/finance.js';
 import { functionalPractice } from './templates.js';
 import { solarTerms } from '../calendar/solar.js';
 import { relationshipCards, relationshipOverview } from './relationship.js';
-import { composePeriod, currentElementReport, contextFor } from './period-story.js';
+import { composePeriod, currentElementReport, contextFor, periodThemes } from './period-story.js';
 import moment from 'moment-timezone/moment-timezone.js';
 import { ELEMENTS, STEM_ELEMENT, HIDDEN, god } from '../data/constants.js';
 import { periodImpact, annualReport } from '../engine/periods.js';
@@ -22,7 +22,7 @@ const compact = (text, limit) => {
   return sentences.slice(0, limit).join('');
 };
 const PERIOD_LEAD = {
-  重整: '這段時間變動較多，重點是重新安排順序。',
+  重整: '這段時間既有安排容易出現明顯變動。',
   競爭: '這段時間人際與分配壓力較明顯。',
   支出: '這段時間機會與支出一起增加。',
   定案: '這段時間適合確立長期安排。',
@@ -66,59 +66,103 @@ const annualObstacle = (p) => {
         ? `${area}會連得更緊，較容易形成共同承諾；最大的麻煩是彼此等待或責任綁得太深。`
         : `${area}的壓力增加，原有做法需要重新協調；最大的麻煩是責任增加，決定權卻沒有跟上。`;
 };
-const decadeHighlights = (p, age) => {
-  const areas = [];
-  const add = (text) => {
-    if (text && !areas.includes(text)) areas.push(text);
-  };
-  for (const effect of p.actions || []) {
-    const positions = effect.positions.filter((x) => x < 4);
-    for (const pos of positions) {
-      add(
-        age < 18
-          ? ['家庭與學習環境', '課業與日常安排', '自我方向與同儕關係', '興趣與未來選擇'][pos]
-          : age >= 65
-            ? ['家庭與親友往來', '日常角色與固定安排', '個人生活與伴侶相處', '晚年規劃與晚輩互動'][
-                pos
-              ]
-            : ['家庭與外部人際', '日常角色與主要發展', '個人方向與親密關係', '長期計畫與子女議題'][
-                pos
-              ],
-      );
-    }
-  }
-  if (!areas.length) {
-    add(
-      p.mode === '定案'
-        ? '長期承諾與生活定位'
-        : p.mode === '競爭'
-          ? '人際分工與個人位置'
-          : p.mode === '支出'
-            ? '金錢安排與生活成本'
-            : '生活選擇與發展方向',
-    );
-  }
-  const change = (p.actions || []).some((x) => /沖/.test(x.type))
-    ? '其中容易出現一次明顯的環境、位置或關係調整。'
-    : (p.actions || []).some((x) => /刑|害/.test(x.type))
-      ? '其中最需要處理的是反覆摩擦、做法不一或界線不清。'
-      : (p.actions || []).some((x) => x.type.includes('合'))
-        ? '其中較容易形成新的長期約定、共同安排或固定角色。'
-        : p.mode === '定案'
-          ? '這些事情會逐步定型，適合建立可長久維持的安排。'
-          : '這些事情會比上一階段更活躍，需要重新分配時間與心力。';
-  const tone =
-    p.mode === '重整'
-      ? '需要重新安排順序'
-      : p.mode === '競爭'
-        ? '人際與分配壓力較明顯'
-        : p.mode === '支出'
-          ? '機會與支出一起增加'
-          : p.mode === '定案'
-            ? '適合確立長期安排'
-            : '選擇與活動增加';
-  return `這十年${tone}，主要轉變在${areas.slice(0, 2).join('、')}。${change}`;
+const DECADE_ROLE = {
+  比肩: {
+    school: '自主意識變強，會更想自己決定學習方式、朋友圈與生活步調。',
+    adult: '自主選擇成為主軸，較適合建立自己的生活方式，也會更在意別人是否尊重你的決定。',
+    senior: '生活自主權變得重要，日常安排宜以本人意願為中心，不必因親友期待失去自己的節奏。',
+  },
+  劫財: {
+    school: '同儕活動與團體歸屬感變強，朋友的邀約、比較與分工會明顯影響時間分配。',
+    adult: '人際往來與共同投入增加，容易遇到一起做、一起付或一起承擔的情況，公平與界線是重點。',
+    senior: '親友往來與互相照應增加，但時間、費用與代辦範圍仍要分清楚，才能保留生活自主。',
+  },
+  食神: {
+    school: '興趣與熟練度開始累積，持續練習比追逐多項活動更容易形成真正的自信。',
+    adult: '這十年適合把喜歡且擅長的事做深，生活品質、創作與經驗分享會成為主要滿足來源。',
+    senior: '生活重心偏向興趣、分享與舒適日常，適合保留能長久參與、身心負擔不大的活動。',
+  },
+  傷官: {
+    school: '想法與表達欲變強，較容易質疑既有做法，也可能透過創作、發表或不同解法受到注意。',
+    adult: '改變現況與表達真實意見的需求提高，容易主動修正不合理安排，也要避免每次分歧都變成對抗。',
+    senior: '更願意照自己的想法生活，與晚輩或照顧者對做法不同時，需要用清楚選擇取代反覆爭辯。',
+  },
+  正財: {
+    school: '固定課程、生活用度與可持續安排變得重要，會開始在意投入是否真的值得。',
+    adult: '穩定收入、固定生活與長期用度成為主軸，適合把日子建立在可預期且能持續的安排上。',
+    senior: '生活現金流與固定用度需要更穩定，重點是確保日常款項可取得、可使用，也容易核對。',
+  },
+  偏財: {
+    school: '活動、新圈子與不同體驗增加，容易同時接觸多種興趣，需要避免每樣都開始卻沒有一項深入。',
+    adult:
+      '外界機會、新圈子與臨時選項增加，生活會比上一階段更有變化，取捨能力決定是否留下真正收穫。',
+    senior: '外部邀約與可選活動增加，適合保留有興趣的參與，但不必為了人情把時間與支出排滿。',
+  },
+  正官: {
+    school: '師長要求、考試標準與固定規範更明確，能否理解規則並穩定完成會影響這十年的信心。',
+    adult: '承諾、資格與固定角色逐步成形，適合確定長期方向，但責任必須和決定權及生活餘裕相稱。',
+    senior: '家庭責任、制度安排與固定角色更明確，協助方式要尊重本人選擇，不能以照顧取代決定。',
+  },
+  七殺: {
+    school: '競賽、升學壓力或環境變動加快成長，容易在被要求突破時進步，也需要避免長期處於緊繃。',
+    adult: '挑戰、急迫決定或高壓任務增加，這十年容易被推到必須快速承擔的位置，支援是否到位很關鍵。',
+    senior: '突發事項與需要快速處理的情況增加，預先安排可求助的人與替代方案，比臨時硬撐更重要。',
+  },
+  正印: {
+    school: '師長支持、正式教材與穩定方法較容易到位，適合建立能長期使用的學習基礎。',
+    adult: '進修、正式支持與可信任的方法較容易出現，這十年適合補足基礎，也要把所學真正用進生活。',
+    senior: '熟悉可靠的支持與休養安排較重要，生活宜延續容易理解、可以信任且有人接手的方法。',
+  },
+  偏印: {
+    school: '獨立研究與特殊興趣變得突出，學習方式可能和多數人不同，需要保留自己的思考空間。',
+    adult:
+      '獨處、研究與重新理解自己的需求提高，適合發展特殊方法，但不能一直準備而沒有實際生活出口。',
+    senior: '獨處、研究興趣與內在整理增加，保留安靜空間有益，但仍要維持必要的人際連結與生活活動。',
+  },
 };
+const DECADE_SECONDARY = {
+  比肩: '同時，自主與同輩立場變強，重要選擇要分清自己的意願與群體期待。',
+  劫財: '同時，共同投入與人情往來增加，誰負責、誰出錢及誰能決定要先說清楚。',
+  食神: '同時，興趣、作品與舒服日常更受重視，持續做熟比不斷換方向更有利。',
+  傷官: '同時，表達與改變需求提高，說出問題之後還要提出能落實的做法。',
+  正財: '同時，穩定生活與固定用度更受重視，長期承諾要以實際能維持為準。',
+  偏財: '同時，外界機會與生活選項變多，留下少數真正值得的方向比全部接受更重要。',
+  正官: '同時，規則、資格與承諾加重，承擔責任時也要保留相應的選擇權。',
+  七殺: '同時，變動與壓力加快決策，事前準備支援能減少每次都靠臨場救火。',
+  正印: '同時，方法、照顧與支持增加，得到幫助後要回到實際行動，避免停在準備階段。',
+  偏印: '同時，獨立思考與特殊方法變強，過度封閉或反覆查證反而會拖慢生活進展。',
+};
+export function decadeHighlights(a, p, age) {
+  const ctx = contextFor(a, p),
+    key = age < 18 ? 'school' : age >= 65 ? 'senior' : 'adult',
+    stemRole = god(a.facts.dm, p.luck.stem),
+    branchRole = god(a.facts.dm, HIDDEN[p.luck.branch][0]),
+    events = periodThemes(a, p, { age }),
+    incoming = new Set([
+      STEM_ELEMENT[p.luck.stem],
+      ...HIDDEN[p.luck.branch].map((s) => STEM_ELEMENT[s]),
+    ]);
+  const lead = DECADE_ROLE[stemRole][key];
+  const secondary = stemRole === branchRole ? '' : DECADE_SECONDARY[branchRole];
+  const event = events[0]?.text;
+  let condition = '';
+  if (ctx.rootsBroken)
+    condition =
+      '原本可依靠的生活節奏較容易被打亂，這一步先守住基本日常與重要關係，再處理新增要求。';
+  else if (ctx.capacity.state === '承格不足')
+    condition =
+      '機會或責任增加時，身心餘裕可能先被壓縮；減少同時進行的事情，比勉強全部接下更重要。';
+  else if (ctx.priority !== null && incoming.has(ctx.priority))
+    condition = '這一步帶來的條件能補到當期最需要的環節，若能持續落實，較容易把想法變成穩定生活。';
+  else if ([...incoming].some((e) => ctx.proposed.veto.includes(e)))
+    condition =
+      '這一步的選項雖然增加，但同類事情過量時容易擠壓休息、關係或可自由使用的時間，宜主動取捨。';
+  else if (ctx.diagnosis.primary.id !== a.diagnosis.primary.id)
+    condition = '這一步的主要課題已和原局不同，過去有效的做法需要配合新的生活條件調整。';
+  else condition = '這一步延續原有優勢，也會放大原本反覆出現的課題，穩定累積比一次擴張更有利。';
+  const follow = event || (secondary ? `${secondary.slice(0, -1)}；${condition}` : condition);
+  return compact(`${lead}${follow}`, 2);
+}
 export const ageAt = (a, ms) =>
   Math.max(
     0,
@@ -193,7 +237,7 @@ export function clientLuckCycle(a, luck) {
   });
   return {
     ...described,
-    summary: compact(decadeHighlights(impact, narrativeAge), 2),
+    summary: decadeHighlights(a, impact, narrativeAge),
     money: compact(
       `進入${narrativeAge >= 100 ? '百歲支持期' : described.financialStage}，${described.money}`,
       2,
