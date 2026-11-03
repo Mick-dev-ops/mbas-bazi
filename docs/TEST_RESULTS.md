@@ -1,3 +1,13 @@
+# 3.1.0 直接下載 PDF 確認
+
+- `npm test`：11 個測試檔、157 項測試全部通過。
+- PDF 回歸測試：完整命盤總覽與五章報告均送入產檔流程；不呼叫 `window.print()`；暫時 DOM 於完成後移除。
+- `npm run test:coverage`：有效組合 131、已覆蓋 131、未覆蓋 0。
+- `npm run test:integrity`：10 張測試命盤、36,000 組大運流年案例，錯誤 0。
+- `npm run build`：Vite 正式建置成功，PDF 函式庫採動態載入，不影響首頁初始載入。
+- `npm run test:dist`：`/mbas-example/` 子路徑、七個 hash URL 與全部引用資產均為 HTTP 200。
+- 實際瀏覽器驗證：產生命盤後按下「匯出 PDF」，畫面顯示「PDF 已下載」，沒有開啟列印視窗。
+
 # 3.0.0 本次確認
 
 驗證日期：2026-11-02。

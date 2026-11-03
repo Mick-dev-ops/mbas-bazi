@@ -1,6 +1,6 @@
 {
   "name": "mbas-bazi",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "繁體中文 MBAS 八字命盤解讀專家系統",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -23,6 +23,7 @@
   "type": "module",
   "dependencies": {
     "astronomy-engine": "2.1.19",
+    "html2pdf.js": "^0.14.0",
     "moment-timezone": "0.6.0"
   },
   "devDependencies": {

@@ -1,5 +1,24 @@
 // @vitest-environment jsdom
 import { it, expect, vi, beforeAll } from 'vitest';
+const pdfMock = vi.hoisted(() => {
+  const worker = {};
+  worker.set = vi.fn((settings) => {
+    worker.settings = settings;
+    return worker;
+  });
+  worker.from = vi.fn((element) => {
+    worker.content = element.textContent;
+    worker.pages = element.querySelectorAll('.report-page').length;
+    worker.overviews = element.querySelectorAll('.page-overview').length;
+    worker.hasDetails = Boolean(element.querySelector('details'));
+    worker.hasLuckTrack = Boolean(element.querySelector('.luck-track'));
+    worker.hasYearPicker = Boolean(element.querySelector('.year-picker'));
+    return worker;
+  });
+  worker.save = vi.fn(async () => undefined);
+  return worker;
+});
+vi.mock('html2pdf.js', () => ({ default: () => pdfMock }));
 beforeAll(async () => {
   document.body.innerHTML = '<div id="app"></div>';
   Element.prototype.scrollIntoView = vi.fn();
@@ -88,24 +107,24 @@ it('流年選單與大運按鈕能更新報告', () => {
   document.querySelector('[data-luck="2"]').click();
   expect(document.querySelector('.luck-item.selected').dataset.luck).toBe('2');
 });
-it('完整列印有五個主題，離開列印後恢復畫面', () => {
-  let content = '';
-  window.print = vi.fn(() => {
-    content = document.querySelector('#print-report').textContent;
-    expect(document.querySelectorAll('#print-report .report-page')).toHaveLength(5);
-    expect(document.querySelectorAll('#print-report .page-overview')).toHaveLength(5);
-    expect(document.querySelector('#print-report details')).toBeNull();
-    expect(document.querySelector('#print-report .luck-track')).toBeNull();
-    expect(document.querySelector('#print-report .year-picker')).toBeNull();
-    expect(document.querySelector('#print-report button')).toBeNull();
-    expect(content).toContain('起運時刻');
-    expect(content).not.toMatch(/作用力|形成原因|裁決依據|mbas-1\./);
-  });
+it('直接下載完整五章PDF，不呼叫瀏覽器列印', async () => {
+  window.print = vi.fn();
   document.querySelector('#print').click();
-  expect(window.print).toHaveBeenCalled();
-  expect(content).toContain('五行取用喜忌神');
-  expect(content).toContain('財運');
+  await vi.waitFor(() => expect(pdfMock.save).toHaveBeenCalled());
+  expect(window.print).not.toHaveBeenCalled();
+  expect(pdfMock.pages).toBe(5);
+  expect(pdfMock.overviews).toBe(5);
+  expect(pdfMock.hasDetails).toBe(false);
+  expect(pdfMock.hasLuckTrack).toBe(false);
+  expect(pdfMock.hasYearPicker).toBe(false);
+  expect(pdfMock.settings.filename).toMatch(/^MBAS_八字命盤_\d{4}-\d{2}-\d{2}_[男女]\.pdf$/);
+  expect(pdfMock.content).toContain('起運時刻');
+  expect(pdfMock.content).toContain('五行取用喜忌神');
+  expect(pdfMock.content).toContain('財運');
+  expect(pdfMock.content).not.toMatch(/作用力|形成原因|裁決依據|mbas-1\./);
   expect(document.querySelector('#print-report')).toBeNull();
+  expect(document.querySelector('#print').disabled).toBe(false);
+  expect(document.querySelector('#audit-status').textContent).toBe('PDF 已下載');
 });
 it('方法頁列出版本、出生地與限制；hash重新整理不需伺服器路由', () => {
   changeRoute('method');
