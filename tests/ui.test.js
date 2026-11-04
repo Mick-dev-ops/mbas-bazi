@@ -1,27 +1,28 @@
 // @vitest-environment jsdom
 import { it, expect, vi, beforeAll } from 'vitest';
 const pdfMock = vi.hoisted(() => {
-  const worker = {};
-  worker.set = vi.fn((settings) => {
-    worker.settings = settings;
-    return worker;
+  const state = {};
+  state.downloadPdf = vi.fn(async (element, filename) => {
+    state.filename = filename;
+    state.content = element.textContent;
+    state.left = element.style.left;
+    state.pages = element.querySelectorAll('.report-page').length;
+    state.overviews = element.querySelectorAll('.page-overview').length;
+    state.hasDetails = Boolean(element.querySelector('details'));
+    state.hasLuckTrack = Boolean(element.querySelector('.luck-track'));
+    state.hasYearPicker = Boolean(element.querySelector('.year-picker'));
+    return { bytes: 12000, pages: 10 };
   });
-  worker.from = vi.fn((element) => {
-    worker.content = element.textContent;
-    worker.pages = element.querySelectorAll('.report-page').length;
-    worker.overviews = element.querySelectorAll('.page-overview').length;
-    worker.hasDetails = Boolean(element.querySelector('details'));
-    worker.hasLuckTrack = Boolean(element.querySelector('.luck-track'));
-    worker.hasYearPicker = Boolean(element.querySelector('.year-picker'));
-    return worker;
-  });
-  worker.save = vi.fn(async () => undefined);
-  return worker;
+  return state;
 });
-vi.mock('html2pdf.js', () => ({ default: () => pdfMock }));
+vi.mock('../src/ui/pdf.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  downloadPdf: pdfMock.downloadPdf,
+}));
 beforeAll(async () => {
   document.body.innerHTML = '<div id="app"></div>';
   Element.prototype.scrollIntoView = vi.fn();
+  HTMLAnchorElement.prototype.click = vi.fn();
   window.print = vi.fn();
   URL.createObjectURL = vi.fn(() => 'blob:test');
   URL.revokeObjectURL = vi.fn();
@@ -110,21 +111,23 @@ it('流年選單與大運按鈕能更新報告', () => {
 it('直接下載完整五章PDF，不呼叫瀏覽器列印', async () => {
   window.print = vi.fn();
   document.querySelector('#print').click();
-  await vi.waitFor(() => expect(pdfMock.save).toHaveBeenCalled());
+  await vi.waitFor(() => expect(pdfMock.downloadPdf).toHaveBeenCalled());
   expect(window.print).not.toHaveBeenCalled();
   expect(pdfMock.pages).toBe(5);
+  expect(pdfMock.left).toBe('0px');
   expect(pdfMock.overviews).toBe(5);
   expect(pdfMock.hasDetails).toBe(false);
   expect(pdfMock.hasLuckTrack).toBe(false);
   expect(pdfMock.hasYearPicker).toBe(false);
-  expect(pdfMock.settings.filename).toMatch(/^MBAS_八字命盤_\d{4}-\d{2}-\d{2}_[男女]\.pdf$/);
+  expect(pdfMock.filename).toMatch(/^MBAS_八字命盤_\d{4}-\d{2}-\d{2}_[男女]\.pdf$/);
   expect(pdfMock.content).toContain('起運時刻');
   expect(pdfMock.content).toContain('五行取用喜忌神');
   expect(pdfMock.content).toContain('財運');
   expect(pdfMock.content).not.toMatch(/作用力|形成原因|裁決依據|mbas-1\./);
-  expect(document.querySelector('#print-report')).toBeNull();
+  expect(document.querySelector('#pdf-report')).toBeNull();
+  expect(document.querySelector('#pdf-progress')).toBeNull();
   expect(document.querySelector('#print').disabled).toBe(false);
-  expect(document.querySelector('#audit-status').textContent).toBe('PDF 已下載');
+  expect(document.querySelector('#audit-status').textContent).toBe('PDF 已下載（10 頁）');
 });
 it('方法頁列出版本、出生地與限制；hash重新整理不需伺服器路由', () => {
   changeRoute('method');

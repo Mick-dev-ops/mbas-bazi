@@ -561,11 +561,12 @@ th {
 #print-report {
   display: none;
 }
-#print-report.pdf-export {
+#pdf-report.pdf-export {
   display: block;
   position: absolute;
-  left: -10000px;
+  left: 0;
   top: 0;
+  z-index: 1000;
   width: 180mm;
   padding: 0;
   overflow: visible;
@@ -573,54 +574,73 @@ th {
   color: #111;
   font-size: 11px;
 }
-#print-report.pdf-export > h1 {
+#pdf-progress {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(245, 243, 236, 0.98);
+  color: var(--green);
+}
+#pdf-progress strong {
+  font-size: 20px;
+}
+#pdf-progress span {
+  font-size: 13px;
+  color: #647069;
+}
+#pdf-report.pdf-export > h1 {
   margin: 0 0 18px;
   font-size: 28px;
 }
-#print-report.pdf-export .report-page {
+#pdf-report.pdf-export .report-page {
   max-width: none;
   margin: 18px 0;
 }
-#print-report.pdf-export .report-page > h2 {
+#pdf-report.pdf-export .report-page > h2 {
   font-size: 26px;
 }
-#print-report.pdf-export .report-card {
+#pdf-report.pdf-export .report-card {
   padding: 12px 14px;
   margin-bottom: 10px;
   background: #fff;
   break-inside: auto;
 }
-#print-report.pdf-export .overview,
-#print-report.pdf-export .ziping-reading {
+#pdf-report.pdf-export .overview,
+#pdf-report.pdf-export .ziping-reading {
   break-inside: avoid;
 }
-#print-report.pdf-export .pillars {
+#pdf-report.pdf-export .pillars {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 16px 0;
 }
-#print-report.pdf-export .table-wrap {
+#pdf-report.pdf-export .table-wrap {
   max-height: none;
   overflow: visible;
 }
-#print-report.pdf-export table {
+#pdf-report.pdf-export table {
   table-layout: fixed;
 }
-#print-report.pdf-export tr {
+#pdf-report.pdf-export tr {
   break-inside: avoid;
 }
-#print-report.pdf-export th,
-#print-report.pdf-export td {
+#pdf-report.pdf-export th,
+#pdf-report.pdf-export td {
   padding: 6px;
   overflow-wrap: break-word;
   word-break: normal;
 }
-#print-report.pdf-export .element-steps {
+#pdf-report.pdf-export .element-steps {
   display: block;
 }
-#print-report.pdf-export .element-steps dd {
+#pdf-report.pdf-export .element-steps dd {
   margin: 0 0 10px;
 }
-#print-report.pdf-export .print-calculation {
+#pdf-report.pdf-export .print-calculation {
   font-size: 10px;
 }
 @media (max-width: 850px) {

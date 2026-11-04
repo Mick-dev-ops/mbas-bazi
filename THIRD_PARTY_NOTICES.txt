@@ -1,10 +1,5 @@
 Production dependencies
 
-html2pdf.js 0.14.0
-https://ekoopmans.github.io/html2pdf.js/
-
-MIT License
-
 html2canvas 1.4.1
 https://html2canvas.hertzen.com
 
