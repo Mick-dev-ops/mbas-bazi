@@ -94,14 +94,10 @@ describe('十神、根氣與干支作用', () => {
   });
   it('三合齊備與半合分開標示，半合不冒充完整成局', () => {
     expect(
-      interactions([cycle(8), cycle(0), cycle(4), cycle(1)]).effects.some(
-        (x) => x.type === '三合',
-      ),
+      interactions([cycle(8), cycle(0), cycle(4), cycle(1)]).effects.some((x) => x.type === '三合'),
     ).toBe(true);
     expect(
-      interactions([cycle(8), cycle(0), cycle(2), cycle(1)]).effects.some(
-        (x) => x.type === '三合',
-      ),
+      interactions([cycle(8), cycle(0), cycle(2), cycle(1)]).effects.some((x) => x.type === '三合'),
     ).toBe(false);
     expect(
       interactions([cycle(8), cycle(0), cycle(2), cycle(1)]).effects.some(

@@ -36,70 +36,70 @@ const BREAKS = [
 
 const ROLE_TEXT = {
   正印: {
-    label: '正式指導型',
+    label: '提供正式方法與支持的前輩或師長',
     person: '熟悉制度的前輩、師長、主管或能提供正式方法的人',
     help: '傳授可以直接採用的方法、確認資格，或提供有制度依據的支持',
     real: '不只告訴你應該怎麼做，還會提供範例、程序、正式背書或後續協助',
     false: '只有意見與要求，卻不提供方法、依據或可使用的支持',
   },
   偏印: {
-    label: '專門解法型',
+    label: '提供特殊解法的專業人士',
     person: '有特殊經驗、跨領域能力或能看出問題盲點的專業人士',
     help: '提供不同於慣例的解法、診斷方向或關鍵知識，協助突破卡住的環節',
     real: '提出的解法能被驗證，也願意陪你把陌生方法轉成可以實際使用的步驟',
     false: '只給零散靈感或神祕說法，卻無法說明如何驗證與落實',
   },
   正官: {
-    label: '正式授權型',
+    label: '提供正式授權的主管或制度代表',
     person: '掌握資格、職責、預算或正式任命權的主管與制度代表',
     help: '確認你的角色與權限，讓責任、資格、資源及決策範圍一起到位',
     real: '交付責任的同時，也明確給予職稱、決策權、預算、期限或升級處理管道',
     false: '只增加規範、考核與責任，卻沒有相對權限及支援',
   },
   七殺: {
-    label: '關鍵推進型',
+    label: '掌握期限、資源或決策權的推進者',
     person: '能在緊急或競爭情境中拍板，並願意讓你承接重要任務的決策者',
     help: '排除阻力、快速作決定，或提供足以完成高難度任務的權力與後援',
     real: '挑戰雖高，但對方會清楚承擔決策、排除障礙並在關鍵時刻支持你',
     false: '只把急迫、風險與成敗責任交給你，事後卻不承認授權或承諾',
   },
   正財: {
-    label: '穩定落地型',
+    label: '協助建立穩定收入或生活安排的人',
     person: '能安排預算、時間、流程或固定合作條件的務實支持者',
     help: '把口頭機會轉成明確條件，協助建立可持續的收入、資源或生活安排',
     real: '會把金額、時程、責任與完成標準說清楚，讓投入能形成實際結果',
     false: '只談願景與回報，卻不確認預算、時程、付款或實際承擔',
   },
   偏財: {
-    label: '機會引介型',
+    label: '帶來客戶、需求或管道的引介者',
     person: '掌握外部資訊、人脈、需求或新機會的引介者',
     help: '帶來新的接觸管道、需求、委託或可選機會，協助擴大原本接觸不到的範圍',
     real: '提供可查證的對象、條件與下一步，並讓你能自行判斷是否值得投入',
     false: '只製造熱度或催促投入，卻沒有清楚條件、可信對象與實際後續',
   },
   食神: {
-    label: '實務帶領型',
+    label: '願意示範並陪同完成第一次實作的人',
     person: '願意示範做法、分享經驗並陪你完成第一次實作的人',
     help: '把複雜事情拆成可操作步驟，協助你穩定完成、表達或交付',
     real: '會實際示範、共同完成或留下可重複使用的做法',
     false: '只稱讚想法或要求結果，真正執行時沒有提供任何協助',
   },
   傷官: {
-    label: '突破修正型',
+    label: '提供修正方法的專業人士',
     person: '能看出制度漏洞、技術問題或表達盲點的改革者與問題解決者',
     help: '指出真正卡點、協助修正方案，或替合理的新做法爭取被聽見的空間',
     real: '批評之外會提出替代方案、驗證方式，並願意共同承擔修正結果',
     false: '只否定現況、挑起對立，卻沒有替代方案與承擔',
   },
   比肩: {
-    label: '同儕互助型',
+    label: '願意分擔且尊重彼此決定的同儕',
     person: '能力相近、願意分享資訊與並肩處理事情的同儕或朋友',
     help: '交換可用經驗、分擔工作，並在你需要獨立判斷時給予可靠回應',
     real: '會實際分擔自己的部分，也尊重彼此決定與成果歸屬',
     false: '以互助為名要求你補位，最後責任仍集中在你身上',
   },
   劫財: {
-    label: '動員協作型',
+    label: '能補足現場人力的行動夥伴',
     person: '能快速召集人手、共同投入或在現場補位的夥伴',
     help: '在時間緊迫時補足人力與行動，協助事情跨過短期瓶頸',
     real: '投入、責任、決定權與所得分配會在開始前說清楚',
@@ -119,6 +119,8 @@ const CAPACITY_LIMIT = {
   正印: '當期承接不足，方法與支持需要直接解決眼前問題，避免增加更多學習與準備負擔',
   偏印: '當期承接不足，特殊解法要先小範圍驗證，否則容易同時嘗試太多方向',
 };
+
+const CAPACITY_RESCUE_GODS = new Set(['正印', '偏印', '比肩', '劫財']);
 
 function stemForGod(dayStem, name) {
   return STEMS.findIndex((_, stem) => god(dayStem, stem) === name);
@@ -244,7 +246,8 @@ export function analyzeBenefactors(a) {
   )[0];
   const easiest = [...candidates].sort(
     (x, y) =>
-      Number(y.visible) + Number(y.rooted) - Number(x.visible) - Number(x.rooted) || y.score - x.score,
+      Number(y.visible) + Number(y.rooted) - Number(x.visible) - Number(x.rooted) ||
+      y.score - x.score,
   )[0];
   const formal =
     [...candidates]
@@ -272,7 +275,7 @@ export function analyzeBenefactors(a) {
   const primary = actual;
   const strength =
     primary.score >= 12 ? '較明顯' : primary.score >= 8 ? '有條件可用' : '需要主動辨認';
-  const overall = `整體貴人運${strength}。最容易遇到的是${easiest.label}，實際幫助最大的是${actual.label}；若要取得正式位置，較要辨認${formal.label}。真正的支持會${actual.help}，不會只留下更多責任。`;
+  const overall = `整體貴人運${strength}。較容易接觸到${easiest.person}，實際幫助最大的是${actual.person}；若要取得正式位置，應辨認${formal.person}。真正的支持會${actual.help}，不會只留下更多責任。`;
   return {
     overall,
     candidates,
@@ -349,18 +352,8 @@ function scoreWindow(a, segment, role) {
     score += 2;
     triggers.push(`流年地支藏${role.god}`);
   }
-  if (luck.stem === role.god) {
-    score += 3;
-    triggers.push(`大運天干為${role.god}`);
-  } else if (luck.hidden.includes(role.god)) {
-    score += 1;
-    triggers.push(`大運地支藏${role.god}`);
-  }
-  if (segment.priority === role.element) {
-    score += 2;
-    triggers.push(`當期優先助力為${ELEMENTS[role.element]}`);
-  }
-  if (segment.periodCapacity.state !== '承格不足') score += 1;
+  if (luck.stem === role.god) triggers.push(`大運提供${role.god}背景`);
+  else if (luck.hidden.includes(role.god)) triggers.push(`大運藏有${role.god}背景`);
   if (annualTianyi) {
     score += annualTianyi.tensions.length ? 0.5 : 2;
     triggers.push(
@@ -368,7 +361,6 @@ function scoreWindow(a, segment, role) {
     );
   }
   if (segment.luck && a.benefactors.tianyi.branches.includes(segment.luck.branch)) {
-    score += 1;
     triggers.push(`大運${BRANCHES[segment.luck.branch]}帶天乙`);
   }
   const sourceAction = segment.actions.filter(
@@ -393,10 +385,12 @@ function scoreWindow(a, segment, role) {
       : role.god === '正印' && annual.stem === role.god && (luck.stem === role.god || annualTianyi)
         ? '取得具體授權或支持'
         : role.sourcePositions.length && (sourceAction.length || luck.stem === role.god)
-          ? '原有人脈開始提供幫助'
-          : '容易遇見這類人物';
+          ? '既有往來可能轉成具體支持'
+          : '較容易遇見這類人物';
   const limits = [];
-  if (segment.periodCapacity.state === '承格不足') limits.push(CAPACITY_LIMIT[role.god]);
+  const capacityRescue = CAPACITY_RESCUE_GODS.has(role.god);
+  if (segment.periodCapacity.state === '承格不足' && !capacityRescue)
+    limits.push(CAPACITY_LIMIT[role.god]);
   if (disturbances.length)
     limits.push(
       `原有助力位置同時受${[...new Set(disturbances.map((x) => x.type.replace('地支', '')))].join('、')}，支持可能伴隨改動或磨合`,
@@ -422,8 +416,16 @@ function scoreWindow(a, segment, role) {
     segment.priority !== role.element
   )
     triggers.push('大運提供可承接的環境');
+  const personEstablished =
+    annual.stem === role.god ||
+    (role.sourcePositions.length > 0 && sourceAction.some((x) => /合|生/.test(x.type))) ||
+    Boolean(annualTianyi && !annualTianyi.tensions.length && annual.hidden.includes(role.god));
+  const helpLands =
+    (segment.periodCapacity.state !== '承格不足' || capacityRescue) &&
+    disturbances.length + sourceBreaks.length < 2;
   const disabled =
-    disturbances.length + sourceBreaks.length >= 2 ||
+    !personEstablished ||
+    !helpLands ||
     ['不利且明顯', '原本有利但過量'].includes(role.functionState);
   return {
     score,
@@ -433,6 +435,9 @@ function scoreWindow(a, segment, role) {
     annualTriggered,
     luckEnvironment,
     disabled,
+    personEstablished,
+    helpLands,
+    capacityRescue,
   };
 }
 
@@ -450,7 +455,13 @@ export function benefactorTimeline(
     for (const segment of report.segments) {
       for (const role of a.benefactors.candidates) {
         const scored = scoreWindow(a, segment, role);
-        if (!scored.annualTriggered || !scored.luckEnvironment || scored.disabled) continue;
+        if (
+          !scored.annualTriggered ||
+          !scored.luckEnvironment ||
+          scored.disabled ||
+          scored.score < 6.5
+        )
+          continue;
         rows.push({
           year,
           age: year - a.chart.birth.year,
@@ -468,7 +479,10 @@ export function benefactorTimeline(
           basis: scored.triggers.join('；'),
           limitation: scored.limitation,
           score: scored.score,
-          strength: scored.score >= 9 ? '高' : scored.score >= 6.5 ? '中' : '觀察',
+          strength: scored.score >= 9 ? '主要窗口' : '條件型窗口',
+          personEstablished: scored.personEstablished,
+          helpLands: scored.helpLands,
+          capacityRescue: scored.capacityRescue,
           trace: trace(
             'BENE-03',
             true,
@@ -485,15 +499,9 @@ export function benefactorTimeline(
     if (!prior || row.score > prior.score) byYear.set(row.year, row);
   }
   const annual = [...byYear.values()];
-  const choose = (list, count) =>
-    [...list]
-      .sort((a, b) => b.score - a.score || a.year - b.year)
-      .slice(0, count)
-      .sort((a, b) => a.year - b.year);
-  const past = choose(
-    annual.filter((x) => x.year < referenceYear && x.year >= referenceYear - 10),
-    5,
-  );
+  const past = annual
+    .filter((x) => x.year < referenceYear && x.year >= referenceYear - 10)
+    .sort((a, b) => a.year - b.year);
   const future = annual
     .filter((x) => x.year >= referenceYear && x.year < referenceYear + 10)
     .sort((a, b) => a.year - b.year);
@@ -504,12 +512,7 @@ export function benefactorTimeline(
     luckGroups.get(row.luck).push(row);
   }
   const longTerm = [...luckGroups.entries()]
-    .map(([luck, group]) => {
-      const high = choose(group.filter((x) => x.strength === '高'), 1);
-      const medium = choose(group.filter((x) => x.strength === '中'), 1);
-      const watch = choose(group.filter((x) => x.strength === '觀察'), 1);
-      return { luck, rows: [...high, ...medium, ...watch].sort((a, b) => a.year - b.year) };
-    })
+    .map(([luck, group]) => ({ luck, rows: group.sort((a, b) => a.year - b.year) }))
     .sort((a, b) => (a.rows[0]?.year || Infinity) - (b.rows[0]?.year || Infinity));
   return {
     referenceYear,

@@ -206,7 +206,12 @@ export function interactions(pillars) {
         positions,
         affectedPositions: positions,
         detail: `${present.map((b) => BRANCHES[b]).join('')}半合：只記聚合傾向，不視為完整成局`,
-        trace: trace('ACT-05', true, positions.map((i) => pillars[i].text), '半合候選'),
+        trace: trace(
+          'ACT-05',
+          true,
+          positions.map((i) => pillars[i].text),
+          '半合候選',
+        ),
       });
     }
   }

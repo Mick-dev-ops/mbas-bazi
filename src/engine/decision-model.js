@@ -48,7 +48,8 @@ const actionStates = (effects, usefulPositions = new Set()) => {
     if (type === '不利力量受到控制') states.add(type);
     if (type === '不利力量被再次加強') states.add(type);
   }
-  if ([...states].some((x) => x.includes('合')) && states.has('地支相沖')) states.add('同時有合與沖');
+  if ([...states].some((x) => x.includes('合')) && states.has('地支相沖'))
+    states.add('同時有合與沖');
   return [...states].filter((x) => INTERACTION_STATES.includes(x));
 };
 
@@ -83,7 +84,8 @@ export function classifyGodFunctions({ facts, strength, use, action, patterns })
     const beneficial = roles.some((x) => GOOD_ROLES.has(x)) || required.has(name);
     const harmful = roles.some((x) => BAD_ROLES.has(x)) || use.veto.includes(element);
     const capacityLimited =
-      strength.state === '承格不足' && ['食神', '傷官', '正財', '偏財', '正官', '七殺'].includes(name);
+      strength.state === '承格不足' &&
+      ['食神', '傷官', '正財', '偏財', '正官', '七殺'].includes(name);
     const state = functionState({
       beneficial,
       harmful,
@@ -118,18 +120,27 @@ export function classifyPeriodState(natal, current, hasLuck, hasAnnual, transiti
   const incomingUseful = current.proposed.order.some(
     (e) => !current.proposed.veto.includes(e) && natal.use.veto.includes(e) === false,
   );
-  const incomingHarmful = current.proposed.order.slice(0, 2).some((e) => current.proposed.veto.includes(e));
+  const incomingHarmful = current.proposed.order
+    .slice(0, 2)
+    .some((e) => current.proposed.veto.includes(e));
   if (hasLuck && incomingUseful) states.push('大運加強原局有利力量');
   if (hasLuck && incomingHarmful) states.push('大運加強原局不利力量');
   if (hasLuck && current.priority !== null && natal.facts.elements[current.priority] < 0.8)
     states.push('大運補足原局缺少的功能');
-  if (hasLuck && current.patterns.primary.id !== natal.patterns.primary.id) states.push('大運破壞原有結構');
+  if (hasLuck && current.patterns.primary.id !== natal.patterns.primary.id)
+    states.push('大運破壞原有結構');
   if (hasLuck && natal.strength.state === '承格不足' && current.capacity.state !== '承格不足')
     states.push('大運提高承接能力');
   if (hasLuck && current.capacity.state === '承格不足') states.push('大運造成責任超載');
   if (hasAnnual) {
     const same = current.diagnosis.primary.id === natal.diagnosis.primary.id;
-    states.push(same ? '流年延續大運' : current.proposed.core !== natal.use.core ? '流年反轉大運' : '流年修正大運');
+    states.push(
+      same
+        ? '流年延續大運'
+        : current.proposed.core !== natal.use.core
+          ? '流年反轉大運'
+          : '流年修正大運',
+    );
     if (current.effects.some((x) => x.positions.some((p) => p >= 5))) states.push('流年引動原局');
     if (current.effects.some((x) => /三合|三會|半合/.test(x.type))) states.push('流年形成新組合');
     if (current.effects.some((x) => /沖|刑|害|破/.test(x.type))) states.push('流年破壞原有組合');
@@ -138,7 +149,16 @@ export function classifyPeriodState(natal, current, hasLuck, hasAnnual, transiti
   return [...new Set(states)].filter((x) => PERIOD_STATES.includes(x));
 }
 
-export function buildDecisionModel({ facts, strength, patterns, flow, climate, diagnosis, use, action }) {
+export function buildDecisionModel({
+  facts,
+  strength,
+  patterns,
+  flow,
+  climate,
+  diagnosis,
+  use,
+  action,
+}) {
   const pState = patternState(patterns, diagnosis);
   const godFunctions = classifyGodFunctions({ facts, strength, use, action, patterns });
   const usefulPositions = new Set(
@@ -153,11 +173,49 @@ export function buildDecisionModel({ facts, strength, patterns, flow, climate, d
     ...godFunctions.map((x) => x.ruleId),
     ...actions.map((x) => `ACTION-${String(INTERACTION_STATES.indexOf(x) + 1).padStart(2, '0')}`),
   ];
+  const roles = (label) =>
+    use.elements.filter((x) => x.roles.includes(label)).map((x) => x.element);
+  const core = Object.freeze({
+    monthCommand: patterns.monthJudgment.name,
+    monthHidden: patterns.monthly.map((x) => x.god),
+    monthExposed: patterns.monthly.filter((x) => x.exposed).map((x) => x.god),
+    bodyState: strength.bodyState,
+    capacity: strength.state,
+    primaryPattern: patterns.structureName || patterns.primary.name,
+    auxiliaryPattern: patterns.auxiliaryStructure,
+    patternState: pState,
+    primaryProblem: diagnosis.primary.name,
+    rescueElements: diagnosis.rescues.map((x) => x.element),
+    flow: flow.path,
+    climate: climate.description,
+    coreUse: roles('核心用神'),
+    prerequisiteUse: roles('先決用神'),
+    assistantUse: roles('相神'),
+    favorable: use.order.filter((e) => !use.veto.includes(e)),
+    conditionalFavorable: roles('條件性喜神'),
+    conditionalAvoid: roles('條件性忌神'),
+    avoid: roles('主要忌神'),
+    natalOrder: use.order,
+    operationOrder: use.operationOrder,
+    lifeLine: `以${patterns.structureName || patterns.primary.name}${patterns.auxiliaryStructure ? `、並見${patterns.auxiliaryStructure}` : ''}為主結構；先處理「${diagnosis.primary.name}」，再依${use.operationOrder.map((e) => ELEMENTS[e]).join('、')}的次序讓格局穩定發揮。`,
+  });
   return Object.freeze({
     sequence: [
-      '月令主氣', '月令藏干及透干', '得令得地得助', '日主承載', '主格與輔助結構',
-      '格局成立狀態', '格局干擾', '核心問題', '救應力量', '五行流通', '寒暖燥濕',
-      '原局喜用順位', '實際啟動順序', '大運改變', '流年改變',
+      '月令主氣',
+      '月令藏干及透干',
+      '得令得地得助',
+      '日主承載',
+      '主格與輔助結構',
+      '格局成立狀態',
+      '格局干擾',
+      '核心問題',
+      '救應力量',
+      '五行流通',
+      '寒暖燥濕',
+      '原局喜用順位',
+      '實際啟動順序',
+      '大運改變',
+      '流年改變',
     ],
     bodyState: strength.bodyState,
     pattern: {
@@ -176,6 +234,10 @@ export function buildDecisionModel({ facts, strength, patterns, flow, climate, d
     interactions: actions,
     coverageIds,
     coverageComplete: coverageIds.every((id) => COMBINATION_COVERAGE.some((x) => x.id === id)),
-    labels: { natalOrder: use.order.map((e) => ELEMENTS[e]), operationOrder: use.operationOrder.map((e) => ELEMENTS[e]) },
+    labels: {
+      natalOrder: use.order.map((e) => ELEMENTS[e]),
+      operationOrder: use.operationOrder.map((e) => ELEMENTS[e]),
+    },
+    core,
   });
 }

@@ -170,7 +170,7 @@ export function zipingReading(chart, patterns = null) {
   return {
     title: '月令格局解讀',
     method: '用子平法的月令格局判讀，再以十神的生剋與透藏說明它如何運作。',
-    note: '這裡說的是命局的運作結構，與五行頁面的喜用神排序是不同問題。',
+    note: '格局說明命局如何取得機會、位置或回報；喜用順位則說明哪些力量需要先介入，才能讓格局穩定發揮。',
     pattern: identity.name,
     paragraphs: [
       opening(chart, identity, links),

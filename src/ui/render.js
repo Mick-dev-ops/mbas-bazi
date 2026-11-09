@@ -30,7 +30,7 @@ export function renderCard(c) {
     ? `<div class="table-wrap"><table${c.table.headers.length >= 6 ? ' class="wide-table"' : ''}><thead><tr>${c.table.headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${c.table.rows.map((row) => `<tr>${row.map((v) => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
     : '';
   const stateList = (x, extra = '') =>
-    `<dl class="element-steps"><dt>使用前</dt><dd>${esc(x.before)}</dd><dt>使用後</dt><dd>${esc(x.after)}</dd><dt>過少時</dt><dd>${esc(x.under)}</dd><dt>剛剛好時</dt><dd>${esc(x.balanced)}</dd><dt>過多時</dt><dd>${esc(x.over)}</dd><dt>生活中的運用</dt><dd>${esc(x.practice)}</dd>${extra}</dl>`;
+    `<dl class="element-steps"><dt>失衡時的狀態</dt><dd>${esc(x.before || x.under)}</dd><dt>實際調整方法</dt><dd>${esc(x.action || x.practice)}</dd><dt>${x.isAvoid ? '減量後的改變' : '適量後的改變'}</dt><dd>${esc(x.after || x.balanced)}</dd><dt>過量風險</dt><dd>${esc(x.over)}</dd><dt>驗證方式</dt><dd>${esc(x.check || x.practice)}</dd>${extra}</dl>`;
   const states =
     c.element !== undefined
       ? c.overall && c.annual

@@ -257,6 +257,36 @@ export function clientLuckCycle(a, luck) {
 }
 export function clientAnnual(a, year, { splitByLifeStage = true } = {}) {
   const r = annualReport(a, year);
+  const annualFocus = (p) => {
+    const stemRole = god(a.facts.dm, p.annual.stem);
+    const branchRole = god(a.facts.dm, HIDDEN[p.annual.branch][0]);
+    const annualPos = p.luck ? 5 : 4;
+    const action = p.actions.find(
+      (x) => x.positions.includes(annualPos) && x.positions.some((n) => n < 4),
+    );
+    const change = !action
+      ? '把新出現的議題做成一項可完成的安排'
+      : /沖/.test(action.type)
+        ? '打開原本固定的安排，重新分配時間或位置'
+        : /合/.test(action.type)
+          ? '讓一項往來、承諾或資源形成更緊密的連結'
+          : /刑|害|破/.test(action.type)
+            ? '處理表面可維持、內部成本卻逐漸增加的問題'
+            : '把新增條件接回既有生活';
+    const centers = {
+      比肩: '自主選擇與個人立場',
+      劫財: '共同投入與分配',
+      食神: '方法、作品與完成結果',
+      傷官: '修正、表達與制度磨合',
+      正財: '固定收入與持續用度',
+      偏財: '新需求與外部機會',
+      正官: '正式承諾、資格與權限',
+      七殺: '期限、競爭與高壓決定',
+      正印: '正式方法與可靠支持',
+      偏印: '專門知識與替代解法',
+    };
+    return `${year}年的辨識重點是${centers[stemRole]}；${centers[branchRole]}會決定事情如何落地。最重要的轉變是${change}。`;
+  };
   return {
     year,
     pillar: r.pillar.text,
@@ -272,10 +302,16 @@ export function clientAnnual(a, year, { splitByLifeStage = true } = {}) {
               stage: stageOf(ageAt(a, p.start)),
             },
           ]
-      ).map((s) => ({
-        ...describePeriod(a, p, s),
-        luck: p.luck?.text || '起運前',
-      })),
+      ).map((s) => {
+        const described = describePeriod(a, p, s);
+        const focus = annualFocus(p);
+        return {
+          ...described,
+          summary: compact(`${focus}${described.summary}`, 2),
+          money: compact(`${focus}${described.money}`, 2),
+          luck: p.luck?.text || '起運前',
+        };
+      }),
     ),
   };
 }
@@ -364,7 +400,9 @@ function elementCard(a, x) {
       under: practice.under,
       balanced: practice.balanced,
       over: practice.excess,
-      practice: `${practice.action} ${practice.check}`,
+      action: practice.action,
+      check: practice.check,
+      isAvoid: banned,
     },
   );
 }
@@ -548,13 +586,18 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
   const activePriority = active.use.order[0];
   const activePractice = functionalPractice(a, a.use.elements[activePriority]);
   const obstacle = annualObstacle(active.p);
+  const operationFirst = a.use.operationOrder[0];
+  const annualFirst = active.use.order[0];
+  const annualSecond = active.use.order[1] ?? annualFirst;
+  const workflow = `長期先建立${ELEMENTS[operationFirst]}所代表的${functionalPractice(a, a.use.elements[operationFirst]).area}；${referenceYear}年遇到事情時，先用${ELEMENTS[annualFirst]}判斷${functionalPractice(a, a.use.elements[annualFirst]).area}；決定接受後，再用${ELEMENTS[annualSecond]}完成後續規則與落地。`;
   const elements = [
     card(
       '一 今年大運流年與五行調整',
       `${referenceYear} 年 ${year.pillar.text}；${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}。今年優先順序：${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。`,
       [
         obstacle,
-        `因此今年最需要用${ELEMENTS[activePriority]}調整${activePractice.area}。${activePractice.action}`,
+        workflow,
+        `因此今年最需要用${ELEMENTS[activePriority]}調整${activePractice.area}；具體做法與驗證方式列在下方。`,
         ...yearUses
           .map((x) => {
             if (x === active || yearUses.length === 1) return null;
@@ -583,14 +626,14 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       const annual = {
         year: referenceYear,
         conclusion: `${referenceYear} 年當期${currentGuidance}`,
-        before: isAvoid
-          ? `目前最常見的是：${practice.excess}`
-          : `開始調整前，${practice.under}`,
+        before: isAvoid ? `目前最常見的是：${practice.excess}` : `開始調整前，${practice.under}`,
         after: practice.after,
         under: practice.under,
         balanced: practice.balanced,
         over: practice.excess,
-        practice: `${practice.action} ${practice.check}`,
+        action: practice.action,
+        check: practice.check,
+        isAvoid,
       };
       return {
         ...base,
@@ -601,7 +644,9 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
         under: annual.under,
         balanced: annual.balanced,
         over: annual.over,
-        practice: annual.practice,
+        action: annual.action,
+        check: annual.check,
+        isAvoid,
         periodAdjustments: (yearUses.length > 1 ? yearUses : []).map((x) => ({
           label: `${date(a, x.p.start)} 至 ${date(a, x.p.end)}・${x.p.luck?.text || '起運前'}・${year.pillar.text}`,
           text: `${ELEMENTS[e]}在這段期間排序第 ${x.use.order.indexOf(e) + 1}；${x.use.order[0] === e ? practice.action : `先維持${practice.balanced}，不必一次增加太多。`}`,
@@ -678,6 +723,7 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
         `實際調整時依序為${a.use.operationOrder.map((e) => ELEMENTS[e]).join(' > ')}。先做的是：${functionalPractice(a, a.use.elements[a.use.operationOrder[0]]).action}`,
         `財務若要改善，五行生活調整必須落到具體條件：${moneyRemedies.join('')}`,
         `${referenceYear} 年處於${active.p.luck?.text || '起運前'}${active.p.luck ? '大運' : ''}，當期順序改為${active.use.order.map((e) => ELEMENTS[e]).join(' > ')}。今年先觀察${activePractice.area}，具體狀態與做法列在下方。`,
+        workflow,
       ],
     ),
   ];
@@ -695,15 +741,28 @@ export function buildClientReports(a, referenceYear = currentReferenceYear(a)) {
       cards,
     })),
     meta: {
+      core: a.decision.core,
       structure: a.decision.pattern,
       disease: a.decision.disease,
       bodyState: a.decision.bodyState,
       natalOrder: a.decision.labels.natalOrder,
       operationOrder: a.decision.labels.operationOrder,
       currentOrder: active.use.order.map((e) => ELEMENTS[e]),
+      decadeThemes: luckPeriods.map((x) => ({ luck: x.luck, summary: x.summary })),
       coverage: COVERAGE_SUMMARY,
     },
   };
+  const checks = [
+    report.pages.every((p) => p.cards.length > 0),
+    report.meta.structure.id === a.decision.pattern.id,
+    report.meta.disease.id === a.decision.disease.id,
+    report.meta.natalOrder.join('|') === a.decision.labels.natalOrder.join('|'),
+    report.meta.operationOrder.join('|') === a.decision.labels.operationOrder.join('|'),
+    new Set(report.meta.decadeThemes.map((x) => x.luck)).size === report.meta.decadeThemes.length,
+    report.pages[1].overview.title.includes('財運'),
+    report.pages[4].overview.title.includes('五行'),
+  ];
+  if (checks.some((x) => !x)) throw Error('報告一致性檢查未通過');
   enforceTextUniqueness(report);
   report.meta.textQuality = auditTextQuality(report);
   return report;

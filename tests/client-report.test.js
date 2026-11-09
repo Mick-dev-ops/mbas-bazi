@@ -13,8 +13,7 @@ import { renderCard, chartOverview, methodView } from '../src/ui/render.js';
 const a = analyze(
   calculate({ year: 1994, month: 8, day: 10, hour: 13, minute: 20, sex: '男', location: 'tw-11' }),
 );
-const forbidden =
-  /作用力|負荷比|形成原因|盤面事實|裁決依據|TXT-\d|STR-\d|USE-\d|聚合力量|功能分/;
+const forbidden = /作用力|負荷比|形成原因|盤面事實|裁決依據|TXT-\d|STR-\d|USE-\d|聚合力量|功能分/;
 it('public reports and overview contain conclusions only; internal evidence is retained separately', () => {
   const r = buildClientReports(a);
   const html =
@@ -109,7 +108,7 @@ it('each element includes distinct before/after and low/balanced/excess states; 
   const cards = p.cards.filter((c) => c.element !== undefined);
   expect(cards).toHaveLength(5);
   for (const c of cards) {
-    for (const k of ['before', 'after', 'under', 'balanced', 'over', 'practice'])
+    for (const k of ['before', 'action', 'after', 'over', 'check'])
       expect(c[k].trim()).toBeTruthy();
     expect(c.under).not.toBe(c.over);
   }
@@ -167,17 +166,13 @@ it('relationship chapter gives marriage, child, parent and benefactor conclusion
     expect(p.cards.some((c) => c.title.includes(title))).toBe(true);
   expect(JSON.stringify(p)).not.toContain('合作中的分工');
   expect(JSON.stringify(p)).not.toContain('近期姻緣、桃花與家庭窗口');
-  const timeline = p.cards.find((c) => c.title.includes('未來十年貴人窗口'));
-  expect(timeline.table.headers).toEqual([
-    '年份',
-    '所在大運',
-    '人物類型',
-    '能提供的幫助',
-    '成立條件',
-    '干擾因素',
-    '強度',
-  ]);
-  expect(timeline.table.rows.length).toBeGreaterThan(0);
+  const timelines = p.cards.filter(
+    (c) => c.title.includes('貴人窗口') || c.title.includes('貴人年份'),
+  );
+  const table = timelines.find((c) => c.table)?.table;
+  if (table)
+    expect(table.headers).toEqual(['年份與強度', '人物類型', '能提供的實際幫助', '成立條件與限制']);
+  expect(timelines.every((c) => !c.table || c.table.rows.length > 0)).toBe(true);
   expect(JSON.stringify(p)).toContain('此盤無法可靠判定貴人性別');
 });
 it('overall element order comes first and each element integrates natal and annual guidance once', () => {

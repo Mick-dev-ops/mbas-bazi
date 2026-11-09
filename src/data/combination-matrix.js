@@ -74,6 +74,17 @@ export const PERIOD_STATES = [
   '交運年度前後兩運同時作用',
 ];
 
+export const BENEFACTOR_STATES = [
+  '命局確實需要這類幫助',
+  '流年提供獨立新增訊號',
+  '外部人物成立',
+  '幫助能夠實際落地',
+  '貴人本身補足承接能力',
+  '有利力量受到明顯干擾',
+  '只有事件成立而非人物',
+  '未通過正式窗口門檻',
+];
+
 const GOD_COPY = {
   比肩: ['同儕與自主', '有人與你並肩處理，也保留各自決定', '分工、成果與費用各自清楚'],
   劫財: ['動員與共同投入', '有人能快速補位或共同承擔', '先說清楚成本、責任與分配'],
@@ -94,8 +105,16 @@ const STATE_COPY = {
   有條件可用: ['符合條件時才會成為助力。', '缺少配套便可能增加負擔。', '先核對承接能力與副作用。'],
   中性: ['目前不是主要助力，也不是主要問題。', '只處理它原本負責的事項。', '不必刻意加強。'],
   不利但受控: ['這股壓力存在，但已有力量約束。', '維持現有限制即可。', '避免解除有效的制衡。'],
-  不利且明顯: ['這股力量正在加重主要問題。', '越投入越容易擠壓重要安排。', '先減量並修復受影響的環節。'],
-  原本有利但過量: ['原本的幫助已超過實際需要。', '持續增加會從支持轉為占用。', '保留有效部分，停止無效加碼。'],
+  不利且明顯: [
+    '這股力量正在加重主要問題。',
+    '越投入越容易擠壓重要安排。',
+    '先減量並修復受影響的環節。',
+  ],
+  原本有利但過量: [
+    '原本的幫助已超過實際需要。',
+    '持續增加會從支持轉為占用。',
+    '保留有效部分，停止無效加碼。',
+  ],
 };
 
 const makeGodRecord = (god, state, index) => {
@@ -118,7 +137,10 @@ const makeGodRecord = (god, state, index) => {
     text: {
       conclusion: `${topic}：${core}`,
       concrete: `${help}；${detail}`,
-      insufficient: state === '有利但不足' ? `${help}，但目前只能處理一部分。` : `${topic}不足時，相關支持難以落實。`,
+      insufficient:
+        state === '有利但不足'
+          ? `${help}，但目前只能處理一部分。`
+          : `${topic}不足時，相關支持難以落實。`,
       balanced: `${topic}適中時，能把幫助轉成可使用的安排。`,
       excess: `${topic}過多時，原本的協助會變成新的時間、責任或成本。`,
       interference: `若同時受合絆、剋制或沖刑影響，${detail}`,
@@ -140,6 +162,7 @@ const baseRecord = (prefix, state, index, priority, chapters) => {
     PATTERN: '月令格局目前能否完整運作',
     ACTION: '兩股力量相遇後改變的環節',
     PERIOD: '大運或流年加入後產生的新變化',
+    BENE: '外部人物能否形成可使用的實際支持',
   }[prefix];
   return {
     id,
@@ -177,7 +200,10 @@ export const COMBINATION_COVERAGE = [
   ...PATTERN_STATES.map((x, i) => baseRecord('PATTERN', x, i, 20, ['全章'])),
   ...GODS.flatMap((g) => GOD_FUNCTION_STATES.map((s, i) => makeGodRecord(g, s, i))),
   ...INTERACTION_STATES.map((x, i) => baseRecord('ACTION', x, i, 50, ['緣分', '貴人', '流年大運'])),
-  ...PERIOD_STATES.map((x, i) => baseRecord('PERIOD', x, i, 60, ['財運', '緣分', '貴人', '流年大運', '五行'])),
+  ...PERIOD_STATES.map((x, i) =>
+    baseRecord('PERIOD', x, i, 60, ['財運', '緣分', '貴人', '流年大運', '五行']),
+  ),
+  ...BENEFACTOR_STATES.map((x, i) => baseRecord('BENE', x, i, 70, ['貴人'])),
 ];
 
 export const COVERAGE_SUMMARY = Object.freeze({
@@ -190,6 +216,7 @@ export const COVERAGE_SUMMARY = Object.freeze({
     godFunction: GODS.length * GOD_FUNCTION_STATES.length,
     interaction: INTERACTION_STATES.length,
     period: PERIOD_STATES.length,
+    benefactor: BENEFACTOR_STATES.length,
   },
 });
 

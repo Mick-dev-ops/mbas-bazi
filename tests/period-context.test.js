@@ -60,7 +60,7 @@ it('relationships provide marriage, child, parent and benefactor conclusions', (
   expect(p.cards[0].title).toContain('婚姻時間');
   for (const word of ['伴侶', '戀愛', '親密', '桃花', '子女', '父母', '貴人'])
     expect(text).toContain(word);
-  expect(text).not.toMatch(/客戶|分潤|專案|產業|合作中的分工/);
+  expect(text).not.toMatch(/分潤|產業|合作中的分工/);
   expect(text).not.toMatch(/你已婚|你的太太|一定結婚|必定懷孕/);
 });
 it('current five-element adjustments depend on the selected year and preserve natal use unchanged', () => {

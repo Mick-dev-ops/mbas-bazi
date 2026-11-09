@@ -15,8 +15,7 @@ import {
 import { INFERENCE_GUARDS } from '../src/data/inference-guards.js';
 import { formatLuckAge } from '../src/ui/render.js';
 
-const make = (input) =>
-  analyze(calculate({ minute: 0, sex: '男', location: 'tw-0', ...input }));
+const make = (input) => analyze(calculate({ minute: 0, sex: '男', location: 'tw-0', ...input }));
 const a = make({ year: 1994, month: 8, day: 10, hour: 13 });
 const b = make({ year: 1985, month: 3, day: 6, hour: 7, sex: '女' });
 const c = make({ year: 1988, month: 4, day: 22, hour: 19 });
@@ -28,7 +27,9 @@ describe('3.0.0 共用裁決與差異化驗收', () => {
   });
 
   it('2 不同月令產生不同核心主線', () => {
-    expect(new Set([a.decision.pattern.name, b.decision.pattern.name, c.decision.pattern.name]).size).toBe(3);
+    expect(
+      new Set([a.decision.pattern.name, b.decision.pattern.name, c.decision.pattern.name]).size,
+    ).toBe(3);
   });
 
   it('3 身勢差異會改變五行策略', () => {
@@ -37,7 +38,9 @@ describe('3.0.0 共用裁決與差異化驗收', () => {
   });
 
   it('4 同一十神可被裁成不同功能狀態', () => {
-    const states = [a, b, c].map((x) => x.decision.godFunctions.find((g) => g.god === '正官').state);
+    const states = [a, b, c].map(
+      (x) => x.decision.godFunctions.find((g) => g.god === '正官').state,
+    );
     expect(new Set(states).size).toBeGreaterThan(1);
     expect(states.every((x) => GOD_FUNCTION_STATES.includes(x))).toBe(true);
   });
@@ -72,7 +75,9 @@ describe('3.0.0 共用裁決與差異化驗收', () => {
 
   it('10 同一大運不同流年具有差異', () => {
     const luck = a.chart.luck[2];
-    const years = [2030, 2031, 2032].map((year) => clientAnnual(a, year, { splitByLifeStage: false }).segments[0].summary);
+    const years = [2030, 2031, 2032].map(
+      (year) => clientAnnual(a, year, { splitByLifeStage: false }).segments[0].summary,
+    );
     expect(new Set(years).size).toBeGreaterThan(1);
     expect(clientLuckCycle(a, luck).summary).toBeTruthy();
   });
@@ -85,7 +90,7 @@ describe('3.0.0 共用裁決與差異化驗收', () => {
 
   it('12 天乙不會單獨觸發重大事件', () => {
     const rows = benefactorTimeline(a, 18, 85, 2026).rows;
-    expect(rows.every((x) => x.basis.includes('大運') || x.basis.includes('當期優先'))).toBe(true);
+    expect(rows.every((x) => x.personEstablished && x.helpLands)).toBe(true);
     expect(rows.every((x) => !/^流年.+天乙$/.test(x.basis))).toBe(true);
   });
 
@@ -94,7 +99,8 @@ describe('3.0.0 共用裁決與差異化驗收', () => {
       ...interactions([cycle(0), cycle(5), cycle(6), cycle(9)]).effects.map((x) => x.type),
       ...interactions([cycle(0), cycle(7), cycle(3), cycle(6)]).effects.map((x) => x.type),
     ]);
-    for (const type of ['天干合', '地支沖', '地支刑', '地支害', '地支破']) expect(types.has(type)).toBe(true);
+    for (const type of ['天干合', '地支沖', '地支刑', '地支害', '地支破'])
+      expect(types.has(type)).toBe(true);
   });
 
   it('14 貴人年份按時間及大運分組', () => {
@@ -126,7 +132,11 @@ describe('3.0.0 共用裁決與差異化驗收', () => {
   it('19 所有有效組合都有完整文本與回退規則', () => {
     expect(COVERAGE_SUMMARY.uncovered).toBe(0);
     expect(COVERAGE_SUMMARY.valid).toBe(COMBINATION_COVERAGE.length);
-    expect(COMBINATION_COVERAGE.every((x) => x.textId && x.fallback && x.text?.conclusion && x.text?.improvement)).toBe(true);
+    expect(
+      COMBINATION_COVERAGE.every(
+        (x) => x.textId && x.fallback && x.text?.conclusion && x.text?.improvement,
+      ),
+    ).toBe(true);
   });
 
   it('20 相同命盤重複執行結果一致', () => {
@@ -137,7 +147,9 @@ describe('3.0.0 共用裁決與差異化驗收', () => {
   it('21 不同命盤輸出具有明顯差異', () => {
     const ar = buildClientReports(a, 2026);
     const br = buildClientReports(b, 2026);
-    expect(ar.pages.map((x) => x.overview.conclusion)).not.toEqual(br.pages.map((x) => x.overview.conclusion));
+    expect(ar.pages.map((x) => x.overview.conclusion)).not.toEqual(
+      br.pages.map((x) => x.overview.conclusion),
+    );
   });
 
   it('22 正文簡潔、狀態枚舉與禁用推論完整', () => {

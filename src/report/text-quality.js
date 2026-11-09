@@ -4,9 +4,7 @@ const splitSentences = (text) =>
     .map((x) => x.trim())
     .filter(Boolean);
 
-const signature = (text) =>
-  String(text || '')
-    .replace(/[\s，。；：、！？（）()]/g, '');
+const signature = (text) => String(text || '').replace(/[\s，。；：、！？（）()]/g, '');
 
 export function enforceTextUniqueness(report) {
   const seen = new Set();
@@ -50,7 +48,10 @@ export function auditTextQuality(report) {
       Object.entries(value).forEach(([k, v]) => visit(v, `${path}.${k}`));
   };
   visit(report);
-  const sentences = strings.flatMap(splitSentences).map(signature).filter((x) => x.length >= 12);
+  const sentences = strings
+    .flatMap(splitSentences)
+    .map(signature)
+    .filter((x) => x.length >= 12);
   const counts = new Map();
   sentences.forEach((x) => counts.set(x, (counts.get(x) || 0) + 1));
   const duplicates = [...counts.entries()].filter(([, count]) => count > 1);

@@ -31,8 +31,7 @@ function effectStory(a, ctx, x, slice) {
     .filter((i) => targets.includes(i.position) && i.exposed)
     .map((i) => i.god);
   let text;
-  if (x.type.includes('沖'))
-    text = `${owner}既定時間或位置被打開；先完成移交，再啟動新的安排。`;
+  if (x.type.includes('沖')) text = `${owner}既定時間或位置被打開；先完成移交，再啟動新的安排。`;
   else if (/刑|害/.test(x.type))
     text = `${owner}配合成本增加，需核對反覆修改、界線或約定落差；宜一次釐清問題，避免靠持續忍讓維持。`;
   else if (x.type === '天干剋') {
