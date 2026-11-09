@@ -1,6 +1,5 @@
 import { annualReport } from '../engine/periods.js';
 import { HIDDEN, god } from '../data/constants.js';
-import { benefactorTimeline } from '../engine/benefactors.js';
 const card = (title, conclusion, paragraphs = [], extra = {}) => ({
   title,
   conclusion,
@@ -158,7 +157,7 @@ export function relationshipOverview(a) {
     ],
   };
 }
-export function relationshipCards(a, referenceYear) {
+export function relationshipCards(a) {
   const spouse = a.chart.birth.sex === '男' ? ['正財', '偏財'] : ['正官', '七殺'];
   const items = a.facts.items.filter((x) => spouse.includes(x.god) && x.force >= 0.2);
   const month = items.some((x) => x.position === 1),
@@ -184,16 +183,6 @@ export function relationshipCards(a, referenceYear) {
   const strict = childGods.some((x) => ['正官', '七殺', '比肩', '劫財'].includes(x));
   const forecast = relationshipForecast(a);
   const benefactors = a.benefactors;
-  const benefactorYears = benefactorTimeline(a, 18, 85, referenceYear);
-  const benefactorTable = (rows) => ({
-    headers: ['年份與強度', '人物類型', '能提供的實際幫助', '成立條件與限制'],
-    rows: rows.map((x) => [
-      `${x.year}年（實歲${x.ageLabel}）・${x.strength}`,
-      x.role,
-      x.help,
-      `${x.stage}。${x.limitation}`,
-    ]),
-  });
   const cards = [
     card('一 一生姻緣與婚姻時間', forecast.marriage, [forecast.marriageNote]),
     card(
@@ -264,33 +253,6 @@ export function relationshipCards(a, referenceYear) {
         `表面支持可能增加責任；若是${benefactors.categories.burden.false}，便不算有效支持。`,
         benefactors.gender,
       ],
-    ),
-    card(
-      '十 過往貴人年份核對',
-      benefactorYears.past.length
-        ? '以下年份用來核對曾出現的支持是否真正落實。'
-        : '近十年沒有同時通過命局需要、大運環境與流年引動的明顯年份。',
-      [],
-      benefactorYears.past.length ? { table: benefactorTable(benefactorYears.past) } : {},
-    ),
-    card(
-      '十一 未來十年貴人窗口',
-      benefactorYears.future.length
-        ? '以下只列真正能形成外部支持的主要窗口與條件型窗口。'
-        : '未來十年未找到足以列為有效支持的組合；單獨出現官、印或天乙不直接算貴人年。',
-      [],
-      benefactorYears.future.length ? { table: benefactorTable(benefactorYears.future) } : {},
-    ),
-    card(
-      '十二 中長期貴人窗口',
-      '中長期按每一步大運分組，只列通過完整條件的年份；沒有窗口的大運不會為了填表而保留。',
-      benefactorYears.longTerm.map(
-        (group) =>
-          `${group.luck === '起運前' ? group.luck : `${group.luck}大運`}：${group.rows.length ? group.rows.map((x) => `${x.year}年${x.role}（${x.strength}）`).join('、') : '未找到完整成立年份'}。`,
-      ),
-      {
-        table: benefactorTable(benefactorYears.longTerm.flatMap((x) => x.rows)),
-      },
     ),
   ];
   return cards;
